@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.2.0
+ * Version:           1.2.1
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.2.0' );
+define( 'SAWA_T_VER', '1.2.1' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -61,7 +61,7 @@ final class Sawa_Testimonials {
 			'showRatings'   => 1,
 			'showSources'   => 1,
 			'showDates'     => 1,
-			'formTitle'     => 'احكيلنا تجربتك مع سوا',
+			'formTitle'     => 'احكيلنا تجربتك مع سوا انجليش',
 			'formIntro'     => 'كنت فين، وبقيت فين؟ قصتك ممكن تشجع حد لسه بيبدأ. اكتبها، أو سجّلها رسالة صوتية، أو ابعت فيديو قصير. بالعربي أو بالانجليزي.',
 			'formConsent'   => 'موافق إن سوا انجليش تنشر تقييمي واسمي وصورتي على الموقع والسوشيال ميديا.',
 			'formButton'    => 'ابعت تقييمي',
@@ -89,6 +89,9 @@ final class Sawa_Testimonials {
 			if ( isset( $saved[ $k ] ) && $saved[ $k ] === $v ) {
 				unset( $saved[ $k ] );
 			}
+		}
+		if ( isset( $saved['formTitle'] ) && 'احكيلنا تجربتك مع سوا' === $saved['formTitle'] ) {
+			unset( $saved['formTitle'] );
 		}
 		if ( isset( $saved['formIntro'] ) && 0 === strpos( $saved['formIntro'], 'How has learning with us helped you?' ) ) {
 			unset( $saved['formIntro'] );
