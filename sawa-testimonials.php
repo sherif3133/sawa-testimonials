@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.0.0
+ * Version:           1.2.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.0.0' );
+define( 'SAWA_T_VER', '1.2.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -47,25 +47,25 @@ final class Sawa_Testimonials {
 
 	public static function defaults() {
 		return array(
-			'title'         => 'Still not sure?',
-			'subtitle'      => 'Take a look at what others have said 👇',
-			'accent'        => '#ae1e20',
-			'theme'         => 'dark',
+			'title'         => 'لسه مش متأكد؟',
+			'subtitle'      => 'اسمع من الطلبة نفسهم.',
+			'accent'        => '#0F0F10',
+			'theme'         => 'light',
 			'font'          => 'inherit',
 			'radius'        => 16,
 			'maxColumns'    => 3,
 			'initialCount'  => 12,
-			'moreLabel'     => 'Show more reviews',
+			'moreLabel'     => 'اعرض تقييمات أكتر',
 			'showSummary'   => 1,
 			'showFilters'   => 1,
 			'showRatings'   => 1,
 			'showSources'   => 1,
 			'showDates'     => 1,
-			'formTitle'     => 'Share your experience with Sawa English',
-			'formIntro'     => 'How has learning with us helped you? Your story can encourage someone who is just starting. Write it, record a voice message, or send a short video, in English or Arabic.',
-			'formConsent'   => 'Sawa English can show my review, name and photo on its website and social media.',
-			'formButton'    => 'Send my review',
-			'formThanks'    => 'Thank you! Your review was sent.',
+			'formTitle'     => 'احكيلنا تجربتك مع سوا',
+			'formIntro'     => 'كنت فين، وبقيت فين؟ قصتك ممكن تشجع حد لسه بيبدأ. اكتبها، أو سجّلها رسالة صوتية، أو ابعت فيديو قصير. بالعربي أو بالانجليزي.',
+			'formConsent'   => 'موافق إن سوا انجليش تنشر تقييمي واسمي وصورتي على الموقع والسوشيال ميديا.',
+			'formButton'    => 'ابعت تقييمي',
+			'formThanks'    => 'شكرًا! تقييمك وصل.',
 			'notify'        => 1,
 			'famewallWall'  => 'sherifabdelbaset',
 		);
@@ -73,7 +73,27 @@ final class Sawa_Testimonials {
 
 	public static function settings() {
 		$saved = get_option( self::OPT, array() );
-		return wp_parse_args( is_array( $saved ) ? $saved : array(), self::defaults() );
+		$saved = is_array( $saved ) ? $saved : array();
+		// 1.1: the old English defaults become the Arabic ones unless they were changed.
+		$old = array(
+			'title'       => 'Still not sure?',
+			'subtitle'    => 'Take a look at what others have said 👇',
+			'moreLabel'   => 'Show more reviews',
+			'formTitle'   => 'Share your experience with Sawa English',
+			'formConsent' => 'Sawa English can show my review, name and photo on its website and social media.',
+			'formButton'  => 'Send my review',
+			'formThanks'  => 'Thank you! Your review was sent.',
+			'accent'      => '#ae1e20',
+		);
+		foreach ( $old as $k => $v ) {
+			if ( isset( $saved[ $k ] ) && $saved[ $k ] === $v ) {
+				unset( $saved[ $k ] );
+			}
+		}
+		if ( isset( $saved['formIntro'] ) && 0 === strpos( $saved['formIntro'], 'How has learning with us helped you?' ) ) {
+			unset( $saved['formIntro'] );
+		}
+		return wp_parse_args( $saved, self::defaults() );
 	}
 
 	public static function wall_settings() {
@@ -178,13 +198,18 @@ final class Sawa_Testimonials {
 			array(
 				'featured' => '',
 				'limit'    => 0,
+				'heading'  => 'yes',
 			),
 			$atts
 		);
 		$featured = in_array( strtolower( (string) $a['featured'] ), array( '1', 'yes', 'true' ), true );
 		wp_enqueue_script( 'sawa-wall', SAWA_T_URL . 'assets/wall.js', array(), SAWA_T_VER, true );
+		$settings = self::wall_settings();
+		if ( in_array( strtolower( (string) $a['heading'] ), array( 'no', '0', 'false' ), true ) ) {
+			$settings['hideHeading'] = true;
+		}
 		$data = array(
-			'settings' => self::wall_settings(),
+			'settings' => $settings,
 			'items'    => self::wall_items( $featured, (int) $a['limit'] ),
 		);
 		return '<div class="sawa-wall"></div>' . self::json_script( 'sawa-wall-data', $data );
@@ -270,7 +295,7 @@ final class Sawa_Testimonials {
 		$rl_key = 'sawa_t_rl_' . md5( self::client_ip() );
 		$count  = (int) get_transient( $rl_key );
 		if ( $count >= 6 ) {
-			return $fail( 'You have sent several reviews already. Please try again in an hour.', 429 );
+			return $fail( 'بعت كذا تقييم خلاص. جرب تاني بعد ساعة.', 429 );
 		}
 
 		$name   = sanitize_text_field( mb_substr( (string) $r->get_param( 'name' ), 0, 80 ) );
@@ -282,22 +307,22 @@ final class Sawa_Testimonials {
 		$files  = $r->get_file_params();
 
 		if ( ! $r->get_param( 'consent' ) ) {
-			return $fail( 'Please tick the box so we can share your review.' );
+			return $fail( 'علّم على المربع عشان نقدر ننشر تقييمك.' );
 		}
 		if ( '' === $name ) {
-			return $fail( 'Please add your name.' );
+			return $fail( 'اكتب اسمك.' );
 		}
 		if ( 'text' === $kind && mb_strlen( $text ) < 10 ) {
-			return $fail( 'Please write a few words about your experience.' );
+			return $fail( 'اكتب كام كلمة عن تجربتك.' );
 		}
 		if ( 'audio' === $kind && empty( $files['audio'] ) ) {
-			return $fail( 'Please record your voice message first.' );
+			return $fail( 'سجّل رسالتك الصوتية الأول.' );
 		}
 		if ( 'video' === $kind && empty( $files['video'] ) && ! $vurl ) {
-			return $fail( 'Please upload a video or paste a YouTube or Loom link.' );
+			return $fail( 'ارفع فيديو، أو حط لينك يوتيوب أو Loom.' );
 		}
 		if ( $vurl && ! preg_match( '~^https?://([a-z0-9-]+\.)*(youtube\.com|youtu\.be|loom\.com)/~i', $vurl ) ) {
-			return $fail( 'Video links must be from YouTube or Loom.' );
+			return $fail( 'اللينك لازم يكون من يوتيوب أو Loom.' );
 		}
 
 		$id = wp_insert_post(
@@ -310,7 +335,7 @@ final class Sawa_Testimonials {
 			true
 		);
 		if ( is_wp_error( $id ) ) {
-			return $fail( 'Your review could not be saved. Please try again.', 500 );
+			return $fail( 'تقييمك متحفظش. جرب تاني.', 500 );
 		}
 		update_post_meta( $id, '_sawa_type', $kind );
 		update_post_meta( $id, '_sawa_role', $role );
@@ -363,9 +388,9 @@ final class Sawa_Testimonials {
 		$f = $_FILES[ $field ]; // phpcs:ignore WordPress.Security.NonceVerification -- public form, validated below.
 		if ( ! empty( $f['error'] ) ) {
 			if ( in_array( (int) $f['error'], array( UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE ), true ) ) {
-				return new WP_Error( 'size', 'That file is too big for the website. Upload your video to YouTube or Loom and paste the link instead.' );
+				return new WP_Error( 'size', 'الملف ده أكبر من اللي الموقع يقبله. ارفع الفيديو على يوتيوب أو Loom وحط اللينك.' );
 			}
-			return new WP_Error( 'upload', 'The file could not be uploaded. Please try again.' );
+			return new WP_Error( 'upload', 'الملف مترفعش. جرب تاني.' );
 		}
 		$type = isset( $f['type'] ) ? (string) $f['type'] : '';
 		$ok   = false;
@@ -375,7 +400,7 @@ final class Sawa_Testimonials {
 			}
 		}
 		if ( ! $ok ) {
-			return new WP_Error( 'type', 'That kind of file is not accepted here.' );
+			return new WP_Error( 'type', 'نوع الملف ده مش مقبول هنا.' );
 		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -386,7 +411,7 @@ final class Sawa_Testimonials {
 		remove_filter( 'upload_mimes', array( __CLASS__, 'extra_mimes' ) );
 		remove_filter( 'wp_check_filetype_and_ext', array( __CLASS__, 'allow_recordings' ), 10 );
 		if ( is_wp_error( $aid ) ) {
-			return new WP_Error( 'upload', 'The file could not be saved: ' . $aid->get_error_message() );
+			return new WP_Error( 'upload', 'الملف متحفظش: ' . $aid->get_error_message() );
 		}
 		return wp_get_attachment_url( $aid );
 	}
