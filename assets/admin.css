@@ -1,0 +1,32 @@
+/* Sawa Testimonials: dashboard styles. */
+.column-sawa_photo { width: 48px; }
+.column-sawa_source { width: 190px; }
+.column-sawa_rating { width: 90px; }
+.column-sawa_featured { width: 36px; text-align: center; }
+.sawa-thumb { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; }
+.sawa-initials { display: grid; place-items: center; background: #ae1e20; color: #fff; font-weight: 600; }
+.sawa-src-wrap { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sawa-ic { display: inline-flex; min-width: 18px; justify-content: center; }
+.sawa-ic svg { width: 18px; height: 18px; }
+.sawa-skool { font: 800 13px/1 system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: -.03em; }
+.sawa-saved { color: #2271b1; font-size: 12px; }
+.sawa-type-tag { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; border: 1px solid #c3c4c7; border-radius: 99px; padding: 0 7px; color: #50575e; }
+.sawa-audio { height: 32px; margin-top: 6px; max-width: 100%; }
+.sawa-stars { color: #f5a524; letter-spacing: 1px; }
+.sawa-feat { border: 0; background: none; font-size: 20px; line-height: 1; cursor: pointer; color: #a7aaad; padding: 2px; }
+.sawa-feat[aria-pressed="true"] { color: #f5a524; }
+.row-actions .sawa_approve a { font-weight: 600; color: #008a20; }
+
+.sawa-fields .sawa-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.sawa-fields select { min-width: 160px; }
+.sawa-fields .sawa-inline { display: flex; gap: 8px; align-items: center; margin-top: 4px; margin-bottom: 14px; }
+.sawa-avatar-prev img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: block; }
+.sawa-checks label { line-height: 2; }
+
+.sawa-preview-stage { padding: 12px; border-radius: 8px; background: #e6f6fa; color: #0d141a; }
+.sawa-preview-stage.wide { padding: 32px 16px; }
+
+.sawa-settings .sawa-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; margin: 16px 0 8px; }
+.sawa-settings .sawa-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 8px; padding: 4px 20px 16px; }
+.sawa-settings .sawa-codes td { padding: 4px 12px 4px 0; vertical-align: top; }
+.sawa-settings .sawa-codes code { user-select: all; }
