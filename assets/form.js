@@ -114,7 +114,8 @@
       + '<form class="box" novalidate>'
       + '<h2>' + esc(cfg.title) + '</h2>' + (cfg.intro ? '<p class="intro">' + esc(cfg.intro) + '</p>' : '')
       + '<div class="gift">' + ic.gift + '<div><b>Your gift: free access to the Sawa App.</b> Send a good review and you get it when Sherif approves your review.</div></div>'
-      + '<div class="note">' + ic.lang + '<div><b>Write your review in Arabic.</b> Most of our students read Arabic, so your story helps them more in Arabic. Voice messages and videos should be in Arabic too.</div></div>'
+      + '<div class="note">' + ic.lang + '<div><b>Write your review in Arabic.</b> Most of our students read Arabic, so your story helps them more in Arabic. Voice messages and videos should be in Arabic too.'
+        + '<p style="margin:8px 0 0"><b>Write it yourself, in your own words.</b> Do not use AI (like ChatGPT) to write your review. Reviews written with AI will be rejected.</p></div></div>'
       + '<div class="f"><span>A good review answers these questions:</span><ol class="qs">' + QUESTIONS.map(function (q) { return '<li style="font-weight:400">' + esc(q) + '</li>'; }).join('') + '</ol></div>'
       + (examples.length ? '<div class="f"><span>Need ideas? Read what other students wrote:</span><div class="exs">' + examples.map(function (x) {
         return '<div class="ex"><div class="exhd">' + (x.avatar ? '<img class="exav" src="' + esc(x.avatar) + '" alt="" loading="lazy">' : '') + esc(x.name) + '</div>'
