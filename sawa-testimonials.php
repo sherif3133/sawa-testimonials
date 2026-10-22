@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.5.0
+ * Version:           1.6.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.5.0' );
+define( 'SAWA_T_VER', '1.6.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -69,6 +69,8 @@ final class Sawa_Testimonials {
 			'formButton'    => 'Send my review',
 			'formThanks'    => 'Thank you! Your review was sent.',
 			'formExamples'  => 'Abdullah Ahmed, Ahmed Fawzy, Zeyad Ouf',
+			'rejectSubject' => 'About your review for Sawa English',
+			'rejectEmail'   => "Hi {name},\n\nThank you for sending a review to Sawa English. We could not publish it yet, because it is too short.\n\nPlease take the time to write a proper review and share your experience in depth:\n- How did you find the community?\n- How did it help your English?\n- What problems did you have before, and how do you deal with them now?\n- What new things did you learn?\n\nWrite your review again here:\n{review_link}\n\nWhen we publish your new review, your free access to the Sawa App will be ready too.\n\nSherif, Sawa English",
 			'notify'        => 1,
 			'famewallWall'  => 'sherifabdelbaset',
 		);
@@ -351,6 +353,8 @@ final class Sawa_Testimonials {
 		$kind   = in_array( $r->get_param( 'kind' ), array( 'text', 'audio', 'video' ), true ) ? $r->get_param( 'kind' ) : 'text';
 		$rating = max( 0, min( 5, (int) $r->get_param( 'rating' ) ) );
 		$vurl   = esc_url_raw( trim( (string) $r->get_param( 'video_url' ) ) );
+		$skool  = sanitize_text_field( mb_substr( (string) $r->get_param( 'skool' ), 0, 80 ) );
+		$email  = sanitize_email( (string) $r->get_param( 'email' ) );
 		$files  = $r->get_file_params();
 
 		if ( ! $r->get_param( 'consent' ) ) {
@@ -361,6 +365,12 @@ final class Sawa_Testimonials {
 		}
 		if ( '' === $role ) {
 			return $fail( 'Write your job or what you study.' );
+		}
+		if ( '' === $skool ) {
+			return $fail( 'Write your name on Skool.' );
+		}
+		if ( ! is_email( $email ) ) {
+			return $fail( 'Write a correct email.' );
 		}
 		if ( empty( $files['photo'] ) ) {
 			return $fail( 'Add a photo of yourself.' );
@@ -398,6 +408,8 @@ final class Sawa_Testimonials {
 		update_post_meta( $id, '_sawa_rating', $rating );
 		update_post_meta( $id, '_sawa_source', 'Website' );
 		update_post_meta( $id, '_sawa_submitted', 1 );
+		update_post_meta( $id, '_sawa_skool', $skool );
+		update_post_meta( $id, '_sawa_email', $email );
 		if ( 'video' === $kind && $vurl && empty( $files['video'] ) ) {
 			update_post_meta( $id, '_sawa_media', $vurl );
 		}
@@ -427,22 +439,18 @@ final class Sawa_Testimonials {
 				get_option( 'admin_email' ),
 				sprintf( 'New %s review from %s', $type_label, $name ),
 				sprintf(
-					"%s sent a new %s review.\n\n%s\n\nApprove or dismiss it here:\n%s",
+					"%s sent a new %s review.\n\n%s\n\nName on Skool: %s\nEmail: %s\n\nApprove or reject it here:\n%s",
 					$name,
 					$type_label,
 					$text ? '"' . $text . '"' : '',
-					admin_url( 'edit.php?post_status=pending&post_type=' . self::PT )
+					$skool,
+					$email,
+					admin_url( 'edit.php?post_type=' . self::PT . '&page=sawa-t-queue' )
 				)
 			);
 		}
 
-		return new WP_REST_Response(
-			array(
-				'ok'       => true,
-				'redirect' => Sawa_Testimonials_Gift::link_for_review( $id ),
-			),
-			200
-		);
+		return new WP_REST_Response( array( 'ok' => true ), 200 );
 	}
 
 	/** Saves one uploaded file into the media library and returns its URL. */

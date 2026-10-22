@@ -35,6 +35,7 @@
       video: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h12v10H3zM15 10l6-3v10l-6-3"/></svg>',
       user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
       camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+      gift: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v4H3zM5 12v9h14v-9M12 8v13M12 8C10 4 7 4 7 6s3 2 5 2c2 0 5 0 5-2s-3-2-5 2"/></svg>',
       lang: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h7M7.5 3v2M5 9c1.5 3 4 5 6 6M10 5c-1 4-3 7-6 9M12 21l4.5-10L21 21M13.5 18h6"/></svg>'
     };
     var examples = (cfg.examples || []).filter(function (x) { return x && x.text; });
@@ -86,6 +87,9 @@
       + '.bar{height:8px;border-radius:99px;background:' + C.field + ';overflow:hidden;border:1px solid ' + C.line + '}.bar i{display:block;height:100%;width:0;background:' + C.head + ';transition:width .2s}'
       + '.send{border:0;background:#E3262B;color:#FFFFFF;border-radius:999px;padding:15px 32px;font:inherit;font-weight:600;font-size:17px;cursor:pointer;justify-self:start}'
       + '.send:hover{opacity:.9}.send:disabled{opacity:.6;cursor:default}'
+      + '.gift{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:' + rf + 'px;background:' + (dark ? '#123A22' : '#E7F5EC') + ';color:' + (dark ? '#A8E6BF' : '#1D6B3A') + ';font-size:15.5px}'
+      + '.gift svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.gift b{font-weight:600}'
+      + '.next{margin:0;padding-left:22px;display:grid;gap:6px;text-align:left;max-width:460px}.next b{color:' + C.head + '}'
       + '.done{text-align:center;justify-items:center}.tick{width:64px;height:64px;border-radius:50%;background:' + C.fill + ';color:' + C.fillInk + ';display:grid;place-items:center;font-size:30px}'
       + '.note{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:' + rf + 'px;background:' + (dark ? '#3A1213' : '#FDECEC') + ';color:' + (dark ? '#FFB3B3' : '#B3171C') + ';font-size:15.5px}'
       + '.note svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.note b{font-weight:600}'
@@ -105,6 +109,7 @@
     root.innerHTML = '<style>' + css + '</style>'
       + '<form class="box" novalidate>'
       + '<h2>' + esc(cfg.title) + '</h2>' + (cfg.intro ? '<p class="intro">' + esc(cfg.intro) + '</p>' : '')
+      + '<div class="gift">' + ic.gift + '<div><b>Your gift: free access to the Sawa App.</b> Send a good review and you get it when Sherif approves your review.</div></div>'
       + '<div class="note">' + ic.lang + '<div><b>Write your review in Arabic.</b> Most of our students read Arabic, so your story helps them more in Arabic. Voice messages and videos should be in Arabic too.</div></div>'
       + '<div class="f"><span>A good review answers these questions:</span><ol class="qs">' + QUESTIONS.map(function (q) { return '<li style="font-weight:400">' + esc(q) + '</li>'; }).join('') + '</ol></div>'
       + (examples.length ? '<div class="f"><span>Need ideas? Read what other students wrote:</span><div class="exs">' + examples.map(function (x) {
@@ -114,8 +119,10 @@
       + '<div class="photo" data-f="photo"><span class="av" aria-hidden="true">' + ic.user + '</span>'
       + '<div class="f"><span>Your photo' + req + '</span><button type="button" class="btn2 pick-photo">' + ic.camera + '<span>Add your photo</span></button><p class="ferr"></p></div>'
       + '<input type="file" class="photo-file" accept="image/*" hidden></div>'
-      + '<div class="row2"><label class="f" data-f="name"><span>Your name' + req + '</span><input name="name" maxlength="80" autocomplete="name" placeholder="Mona Ahmed" required><p class="ferr"></p></label>'
-      + '<label class="f" data-f="role"><span>Your job or studies' + req + '</span><input name="role" maxlength="120" placeholder="Nurse · or · Engineering student" required><p class="ferr"></p></label></div>'
+      + '<div class="row2"><label class="f" data-f="name"><span>Your full name' + req + '</span><input name="name" maxlength="80" autocomplete="name" placeholder="Mona Ahmed Hassan" required><p class="ferr"></p></label>'
+      + '<label class="f" data-f="role"><span>Your job or studies' + req + '</span><input name="role" maxlength="120" placeholder="Nurse · or · Engineering student" required><p class="ferr"></p></label>'
+      + '<label class="f" data-f="skool"><span>Your name on Skool' + req + '</span><input name="skool" maxlength="80" placeholder="Mona Ahmed" required><small>The name people see on your Skool profile.</small><p class="ferr"></p></label>'
+      + '<label class="f" data-f="email"><span>Your email' + req + '</span><input name="email" type="email" maxlength="120" autocomplete="email" inputmode="email" placeholder="mona@gmail.com" required><small>We send your app login here.</small><p class="ferr"></p></label></div>'
       + '<div class="f"><span>How do you want to share?</span><div class="kinds" role="group" aria-label="How do you want to share?">'
       + '<button type="button" class="kind" data-k="text" aria-pressed="true">' + ic.text + 'Write</button>'
       + '<button type="button" class="kind" data-k="audio" aria-pressed="false">' + ic.audio + 'Voice message</button>'
@@ -142,7 +149,8 @@
       + '<div class="bar" hidden><i></i></div>'
       + '<button class="send" type="submit">' + esc(cfg.button || 'Send') + '</button>'
       + '</form>'
-      + '<div class="box done" hidden><div class="tick" aria-hidden="true">✓</div><h2>' + esc(cfg.thanks) + '</h2></div>';
+      + '<div class="box done" hidden><div class="tick" aria-hidden="true">✓</div><h2>' + esc(cfg.thanks) + '</h2>'
+      + '<ol class="next"><li>Sherif reads your review (usually within a day).</li><li>If it\'s approved, you get an email at <b class="mail"></b> to open the Sawa App.</li><li>If it\'s too short, you get an email asking you to write a bit more.</li></ol></div>';
 
     var $ = function (s) { return root.querySelector(s); };
     var form = $('form'), errEl = $('.err'), send = $('.send'), opened = Date.now();
@@ -247,14 +255,16 @@
     });
 
     function val(n) { return (form.querySelector('[name="' + n + '"]').value || '').trim(); }
-    function done() { form.hidden = true; $('.done').hidden = false; host.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    function done() { $('.done .mail').textContent = val('email'); form.hidden = true; $('.done').hidden = false; host.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     form.addEventListener('submit', function (e) {
       e.preventDefault(); clearErrs();
       stopRec();
-      var name = val('name'), role = val('role'), text = val('text'), vurl = val('video_url'), bad = [];
+      var name = val('name'), role = val('role'), skool = val('skool'), email = val('email'), text = val('text'), vurl = val('video_url'), bad = [];
       if (!photoBlob) bad.push(['photo', 'Add a photo of yourself.']);
       if (!name) bad.push(['name', 'Write your name.']);
       if (!role) bad.push(['role', 'Write your job or what you study.']);
+      if (!skool) bad.push(['skool', 'Write your name on Skool.']);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) bad.push(['email', 'Write a correct email.']);
       if (kind === 'text' && text.length < 10) bad.push(['text', 'Write a few words about your story.']);
       else if (kind === 'text' && !mostlyArabic(text)) bad.push(['text', 'Write your review in Arabic.']);
       if (!form.querySelector('[name=consent]').checked) bad.push(['consent', 'Tick the box so we can use your review.']);
@@ -266,7 +276,7 @@
       if (cfg.preview) return done();
 
       var fd = new FormData();
-      fd.append('name', name); fd.append('role', role); fd.append('text', text);
+      fd.append('name', name); fd.append('role', role); fd.append('skool', skool); fd.append('email', email); fd.append('text', text);
       fd.append('kind', kind); fd.append('rating', String(rating)); fd.append('consent', '1');
       fd.append('website', val('website')); fd.append('elapsed', String(Date.now() - opened));
       if (kind === 'video' && !videoFile) fd.append('video_url', vurl);
@@ -283,7 +293,6 @@
       xhr.onload = function () {
         var res = null; try { res = JSON.parse(xhr.responseText); } catch (x) {}
         if (xhr.status >= 200 && xhr.status < 300 && res && res.ok) {
-          if (res.redirect) { send.textContent = 'Opening your gift…'; window.location.href = res.redirect; return; }
           return done();
         }
         if (xhr.status === 413) return reset('This file is too big for the website. Put the video on YouTube or Loom and paste the link.');

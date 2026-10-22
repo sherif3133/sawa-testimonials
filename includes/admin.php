@@ -36,6 +36,9 @@ final class Sawa_Testimonials_Admin {
 		add_action( 'admin_post_sawa_t_import', array( __CLASS__, 'import' ) );
 		add_action( 'wp_ajax_sawa_t_set', array( __CLASS__, 'ajax_set' ) );
 		add_action( 'wp_ajax_sawa_t_localize', array( __CLASS__, 'ajax_localize' ) );
+
+		require_once SAWA_T_DIR . 'includes/queue.php';
+		Sawa_Testimonials_Queue::init();
 	}
 
 	private static function is_ours() {
@@ -481,10 +484,11 @@ final class Sawa_Testimonials_Admin {
 		$d   = Sawa_Testimonials::defaults();
 		$in  = is_array( $in ) ? $in : array();
 		$out = array();
-		foreach ( array( 'title', 'subtitle', 'moreLabel', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'famewallWall' ) as $k ) {
+		foreach ( array( 'title', 'subtitle', 'moreLabel', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'rejectSubject', 'famewallWall' ) as $k ) {
 			$out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : $d[ $k ];
 		}
 		$out['formIntro']    = isset( $in['formIntro'] ) ? sanitize_textarea_field( $in['formIntro'] ) : $d['formIntro'];
+		$out['rejectEmail']  = isset( $in['rejectEmail'] ) && '' !== trim( $in['rejectEmail'] ) ? sanitize_textarea_field( $in['rejectEmail'] ) : $d['rejectEmail'];
 		$out['accent']       = sanitize_hex_color( $in['accent'] ?? '' ) ? sanitize_hex_color( $in['accent'] ) : $d['accent'];
 		$out['theme']        = in_array( $in['theme'] ?? '', array( 'light', 'dark' ), true ) ? $in['theme'] : $d['theme'];
 		$out['font']         = in_array( $in['font'] ?? '', Sawa_Testimonials::FONTS, true ) ? $in['font'] : $d['font'];
@@ -548,8 +552,8 @@ final class Sawa_Testimonials_Admin {
 						<tr><td><code>[sawa_testimonials]</code></td><td>The full wall</td></tr>
 						<tr><td><code>[sawa_testimonials featured="yes"]</code></td><td>Only testimonials marked ★ featured</td></tr>
 						<tr><td><code>[sawa_testimonials limit="6"]</code></td><td>The 6 newest</td></tr>
-						<tr><td><code>[sawa_review_form]</code></td><td>The review form for students (put it on a page like <b>/review</b>)</td></tr>
-						<tr><td><code>[sawa_gift_form]</code></td><td>The gift page students go to after sending a review: they claim free Sawa App access (put it on a page like <b>/gift</b>, with the <b>Sawa: App page</b> template). Claims show in <b>Sawa Tracker → Access requests</b>.</td></tr>
+						<tr><td><code>[sawa_review_form]</code></td><td>The review form for students (put it on a page like <b>/review</b>). It asks for their Skool name and email; approve or reject reviews in <b>Testimonials → Review queue</b>.</td></tr>
+						<tr><td><code>[sawa_gift_form]</code></td><td>Old gift page: it now shows the review form, so old /gift links still work. The gift (Sawa App access) is given when you approve a review in the <b>Review queue</b>.</td></tr>
 					</table>
 					<p class="description">The wall updates by itself: approve a review and it's on your site.</p>
 				</div>
@@ -607,6 +611,13 @@ final class Sawa_Testimonials_Admin {
 					<tr><th scope="row"><label for="f-examples">Example reviews</label></th><td><input id="f-examples" class="large-text" name="<?php echo $f( 'formExamples' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['formExamples'] ); ?>"><p class="description">Names of students, separated by commas. The form shows the newest published review of each one as an example.</p></td></tr>
 					<tr><th scope="row">Email me</th><td><label><input type="checkbox" name="<?php echo $f( 'notify' ); // phpcs:ignore ?>" value="1" <?php checked( $s['notify'], 1 ); ?>> Send an email to <?php echo esc_html( get_option( 'admin_email' ) ); ?> when a student sends a review</label></td></tr>
 					<tr><th scope="row">Upload limit</th><td><p class="description">Your server accepts files up to <b><?php echo esc_html( size_format( wp_max_upload_size() ) ); ?></b>. Students with bigger videos are asked to paste a YouTube or Loom link instead.</p></td></tr>
+				</table>
+
+				<h2>Rejection email</h2>
+				<p>Sent when you reject a review in the <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . self::PT . '&page=sawa-t-queue' ) ); ?>">Review queue</a>. You can still change it for one student before you send.</p>
+				<table class="form-table" role="presentation">
+					<tr><th scope="row"><label for="f-rsub">Subject</label></th><td><input id="f-rsub" class="large-text" name="<?php echo $f( 'rejectSubject' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['rejectSubject'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="f-rmail">Message</label></th><td><textarea id="f-rmail" class="large-text" rows="14" name="<?php echo $f( 'rejectEmail' ); // phpcs:ignore ?>"><?php echo esc_textarea( $s['rejectEmail'] ); ?></textarea><p class="description"><code>{name}</code> becomes the student's first name and <code>{review_link}</code> the link to the review form.</p></td></tr>
 				</table>
 				<input type="hidden" name="<?php echo $f( 'famewallWall' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['famewallWall'] ); ?>">
 				<?php submit_button( 'Save settings' ); ?>
