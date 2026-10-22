@@ -495,11 +495,12 @@ final class Sawa_Testimonials_Admin {
 		$d   = Sawa_Testimonials::defaults();
 		$in  = is_array( $in ) ? $in : array();
 		$out = array();
-		foreach ( array( 'title', 'subtitle', 'moreLabel', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'rejectSubject', 'famewallWall' ) as $k ) {
+		foreach ( array( 'title', 'subtitle', 'moreLabel', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'rejectSubject', 'rejectAiSubject', 'famewallWall' ) as $k ) {
 			$out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : $d[ $k ];
 		}
 		$out['formIntro']    = isset( $in['formIntro'] ) ? sanitize_textarea_field( $in['formIntro'] ) : $d['formIntro'];
 		$out['rejectEmail']  = isset( $in['rejectEmail'] ) && '' !== trim( $in['rejectEmail'] ) ? sanitize_textarea_field( $in['rejectEmail'] ) : $d['rejectEmail'];
+		$out['rejectAiEmail'] = isset( $in['rejectAiEmail'] ) && '' !== trim( $in['rejectAiEmail'] ) ? sanitize_textarea_field( $in['rejectAiEmail'] ) : $d['rejectAiEmail'];
 		$out['accent']       = sanitize_hex_color( $in['accent'] ?? '' ) ? sanitize_hex_color( $in['accent'] ) : $d['accent'];
 		$out['theme']        = in_array( $in['theme'] ?? '', array( 'light', 'dark' ), true ) ? $in['theme'] : $d['theme'];
 		$out['font']         = in_array( $in['font'] ?? '', Sawa_Testimonials::FONTS, true ) ? $in['font'] : $d['font'];
@@ -624,11 +625,17 @@ final class Sawa_Testimonials_Admin {
 					<tr><th scope="row">Upload limit</th><td><p class="description">Your server accepts files up to <b><?php echo esc_html( size_format( wp_max_upload_size() ) ); ?></b>. Students with bigger videos are asked to paste a YouTube or Loom link instead.</p></td></tr>
 				</table>
 
-				<h2>Rejection email</h2>
-				<p>Sent when you reject a review in the <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . self::PT . '&page=sawa-t-queue' ) ); ?>">Review queue</a>. You can still change it for one student before you send.</p>
+				<h2>Rejection emails</h2>
+				<p>When you reject a review in the <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=' . self::PT . '&page=sawa-t-queue' ) ); ?>">Review queue</a>, you pick the reason and the matching email is filled in. You can still change it for one student before you send. In both, <code>{name}</code> becomes the student's first name and <code>{review_link}</code> the link to the review form.</p>
+				<h3>Too short</h3>
 				<table class="form-table" role="presentation">
 					<tr><th scope="row"><label for="f-rsub">Subject</label></th><td><input id="f-rsub" class="large-text" name="<?php echo $f( 'rejectSubject' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['rejectSubject'] ); ?>"></td></tr>
-					<tr><th scope="row"><label for="f-rmail">Message</label></th><td><textarea id="f-rmail" class="large-text" rows="14" name="<?php echo $f( 'rejectEmail' ); // phpcs:ignore ?>"><?php echo esc_textarea( $s['rejectEmail'] ); ?></textarea><p class="description"><code>{name}</code> becomes the student's first name and <code>{review_link}</code> the link to the review form.</p></td></tr>
+					<tr><th scope="row"><label for="f-rmail">Message</label></th><td><textarea id="f-rmail" class="large-text" rows="14" name="<?php echo $f( 'rejectEmail' ); // phpcs:ignore ?>"><?php echo esc_textarea( $s['rejectEmail'] ); ?></textarea></td></tr>
+				</table>
+				<h3>Looks written with AI</h3>
+				<table class="form-table" role="presentation">
+					<tr><th scope="row"><label for="f-rasub">Subject</label></th><td><input id="f-rasub" class="large-text" name="<?php echo $f( 'rejectAiSubject' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['rejectAiSubject'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="f-ramail">Message</label></th><td><textarea id="f-ramail" class="large-text" rows="16" name="<?php echo $f( 'rejectAiEmail' ); // phpcs:ignore ?>"><?php echo esc_textarea( $s['rejectAiEmail'] ); ?></textarea></td></tr>
 				</table>
 				<input type="hidden" name="<?php echo $f( 'famewallWall' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['famewallWall'] ); ?>">
 				<?php submit_button( 'Save settings' ); ?>

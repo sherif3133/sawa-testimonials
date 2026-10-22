@@ -28,11 +28,11 @@ final class Sawa_Testimonials_Queue {
 		add_submenu_page( 'edit.php?post_type=' . Sawa_Testimonials::PT, 'Review queue', $label, 'publish_posts', self::SLUG, array( __CLASS__, 'page' ), 0 );
 	}
 
-	/** The rejection email for one review, with {name} and {review_link} filled in. */
-	private static function reject_text( $post ) {
+	/** A rejection email for one review ($reason: 'short' or 'ai'), with {name} and {review_link} filled in. */
+	private static function reject_text( $post, $reason = 'short' ) {
 		$s = Sawa_Testimonials::settings();
 		return strtr(
-			$s['rejectEmail'],
+			'ai' === $reason ? $s['rejectAiEmail'] : $s['rejectEmail'],
 			array(
 				'{name}'        => strtok( $post->post_title, ' ' ),
 				'{review_link}' => home_url( '/review/' ),
@@ -87,6 +87,7 @@ final class Sawa_Testimonials_Queue {
 				$sent    = wp_mail( $email, $subject ? $subject : $s['rejectSubject'], $message ? $message : self::reject_text( $post ) );
 			}
 			update_post_meta( $id, '_sawa_rejected', current_time( 'mysql' ) );
+			update_post_meta( $id, '_sawa_reject_reason', isset( $_POST['reason'] ) && 'ai' === $_POST['reason'] ? 'ai' : 'short' ); // phpcs:ignore WordPress.Security.NonceVerification -- checked above.
 			wp_trash_post( $id );
 			wp_safe_redirect( self::url( array( 'done' => $sent ? 'rejected_mail' : 'rejected' ) ) );
 			exit;
@@ -149,6 +150,7 @@ final class Sawa_Testimonials_Queue {
 				.sawa-q-mail{display:grid;gap:8px;margin-top:10px;padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#fcfcfc}
 				.sawa-q-mail textarea{width:100%;min-height:240px}
 				.sawa-q-warn{background:#fcf9e8;border-left:4px solid #dba617;padding:8px 10px;margin:0}
+				.sawa-q-why{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 				.sawa-q-tr{border:1px solid #dcdcde;border-radius:6px;padding:10px 12px;display:grid;gap:8px}
 				.sawa-q-trh{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#50575e}.sawa-q-trh form{margin:0}
 				.sawa-q-tag{font-size:11px;padding:1px 8px;border-radius:999px;background:#e5f0fa;color:#135e96;margin-left:4px}
@@ -258,7 +260,13 @@ final class Sawa_Testimonials_Queue {
 							<form class="sawa-q-mail" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 								<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts. ?>
 								<?php if ( is_email( $email ) ) : ?>
-									<label>Email to <b><?php echo esc_html( $email ); ?></b> · Subject<br><input type="text" class="large-text" name="subject" value="<?php echo esc_attr( Sawa_Testimonials::settings()['rejectSubject'] ); ?>"></label>
+									<?php $st = Sawa_Testimonials::settings(); ?>
+									<div class="sawa-q-why" data-short-subject="<?php echo esc_attr( $st['rejectSubject'] ); ?>" data-short="<?php echo esc_attr( self::reject_text( $p, 'short' ) ); ?>" data-ai-subject="<?php echo esc_attr( $st['rejectAiSubject'] ); ?>" data-ai="<?php echo esc_attr( self::reject_text( $p, 'ai' ) ); ?>">
+										<b>Reason:</b>
+										<label><input type="radio" name="reason" value="short" checked> Too short</label>
+										<label><input type="radio" name="reason" value="ai"> Looks written with AI</label>
+									</div>
+									<label>Email to <b><?php echo esc_html( $email ); ?></b> · Subject<br><input type="text" class="large-text" name="subject" value="<?php echo esc_attr( $st['rejectSubject'] ); ?>"></label>
 									<textarea name="message"><?php echo esc_textarea( self::reject_text( $p ) ); ?></textarea>
 									<div><button class="button button-reject" name="do" value="reject">Reject and send email</button></div>
 								<?php else : ?>
@@ -271,6 +279,16 @@ final class Sawa_Testimonials_Queue {
 				</div>
 			<?php endforeach; ?>
 			</div>
+			<script>
+				// Reject → Reason: swap in the matching email (subject and text), which can still be edited.
+				document.querySelectorAll( '.sawa-q-why' ).forEach( function ( why ) {
+					why.addEventListener( 'change', function ( e ) {
+						var ai = e.target.value === 'ai', form = why.closest( 'form' );
+						form.querySelector( '[name=subject]' ).value = why.getAttribute( ai ? 'data-ai-subject' : 'data-short-subject' );
+						form.querySelector( '[name=message]' ).value = why.getAttribute( ai ? 'data-ai' : 'data-short' );
+					} );
+				} );
+			</script>
 		</div>
 		<?php
 	}

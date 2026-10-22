@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.8.1
+ * Version:           1.9.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.8.1' );
+define( 'SAWA_T_VER', '1.9.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -74,6 +74,8 @@ final class Sawa_Testimonials {
 			'minWords'      => 40,
 			'rejectSubject' => 'About your review for Sawa English',
 			'rejectEmail'   => "Hi {name},\n\nThank you for sending a review to Sawa English. We could not publish it yet, because it is too short.\n\nPlease take the time to write a proper review and share your experience in depth:\n- How did you find the community?\n- How did it help your English?\n- What problems did you have before, and how do you deal with them now?\n- What new things did you learn?\n\nWrite your review again here:\n{review_link}\n\nWhen we publish your new review, your free access to the Sawa App will be ready too.\n\nSherif, Sawa English",
+			'rejectAiSubject' => 'About your review for Sawa English',
+			'rejectAiEmail'   => "Hi {name},\n\nThank you for sending a review to Sawa English. We could not publish it, because it looks like it was written with AI (like ChatGPT).\n\nWe want your real story, in your own words. Simple Arabic and short sentences are completely fine. A real story is what helps other students.\n\nPlease write your review again yourself, and answer these questions:\n- How did you find the community?\n- How did it help your English?\n- What problems did you have before, and how do you deal with them now?\n- What new things did you learn?\n\nWrite your review again here:\n{review_link}\n\nWhen we publish your new review, your free access to the Sawa App will be ready too.\n\nSherif, Sawa English",
 			'notify'        => 1,
 			'famewallWall'  => 'sherifabdelbaset',
 		);
