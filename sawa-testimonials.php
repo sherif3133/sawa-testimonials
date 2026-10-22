@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.6.0
+ * Version:           1.7.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.6.0' );
+define( 'SAWA_T_VER', '1.7.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -69,6 +69,7 @@ final class Sawa_Testimonials {
 			'formButton'    => 'Send my review',
 			'formThanks'    => 'Thank you! Your review was sent.',
 			'formExamples'  => 'Abdullah Ahmed, Ahmed Fawzy, Zeyad Ouf',
+			'minWords'      => 40,
 			'rejectSubject' => 'About your review for Sawa English',
 			'rejectEmail'   => "Hi {name},\n\nThank you for sending a review to Sawa English. We could not publish it yet, because it is too short.\n\nPlease take the time to write a proper review and share your experience in depth:\n- How did you find the community?\n- How did it help your English?\n- What problems did you have before, and how do you deal with them now?\n- What new things did you learn?\n\nWrite your review again here:\n{review_link}\n\nWhen we publish your new review, your free access to the Sawa App will be ready too.\n\nSherif, Sawa English",
 			'notify'        => 1,
@@ -245,6 +246,7 @@ final class Sawa_Testimonials {
 			'thanks'    => $s['formThanks'],
 			'preview'   => $preview,
 			'examples'  => self::form_examples( $s['formExamples'] ),
+			'minWords'  => (int) $s['minWords'],
 		);
 	}
 
@@ -375,8 +377,13 @@ final class Sawa_Testimonials {
 		if ( empty( $files['photo'] ) ) {
 			return $fail( 'Add a photo of yourself.' );
 		}
-		if ( 'text' === $kind && mb_strlen( $text ) < 10 ) {
-			return $fail( 'Write a few words about your story.' );
+		$min   = max( 1, (int) self::settings()['minWords'] );
+		$words = count( preg_split( '/\s+/u', trim( $text ), -1, PREG_SPLIT_NO_EMPTY ) );
+		if ( 'text' === $kind && $words < $min ) {
+			return $fail( sprintf( 'Write at least %d words. You have %d.', $min, $words ) );
+		}
+		if ( $rating < 1 ) {
+			return $fail( 'Choose your rating (1 to 5 stars).' );
 		}
 		if ( 'text' === $kind && ! self::mostly_arabic( $text ) ) {
 			return $fail( 'Write your review in Arabic.' );

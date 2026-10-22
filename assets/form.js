@@ -72,6 +72,10 @@
       + '.timer{font-variant-numeric:tabular-nums;font-weight:600;color:' + C.head + '}'
       + 'audio,video{width:100%;display:block;border-radius:' + rf + 'px}video{max-height:320px;background:#0F0F10}'
       + '.link{color:' + C.head + ';text-decoration:underline;text-underline-offset:3px;cursor:pointer;background:none;border:0;padding:0;font:inherit}'
+      + '.wc{display:flex;align-items:center;gap:10px;font-weight:400;font-size:13.5px;color:' + C.muted + '}'
+      + '.wcbar{flex:1;max-width:220px;height:6px;border-radius:99px;background:' + C.field + ';border:1px solid ' + C.line + ';overflow:hidden}'
+      + '.wcbar i{display:block;height:100%;width:0;background:' + C.muted + ';transition:width .15s}'
+      + '.wc.ok{color:#1D6B3A}.wc.ok .wcbar i{background:#1D6B3A}'
       + '.stars{display:flex;gap:4px}.stars button{border:0;background:none;padding:2px;cursor:pointer;color:' + C.line + ';line-height:0}'
       + '.stars button.on{color:' + C.head + '}.stars svg{width:30px;height:30px}'
       + '.rate{border:0;padding:0;margin:0}.rate legend{font-weight:600;font-size:15px;color:' + C.head + ';padding:0;margin-bottom:8px}'
@@ -139,10 +143,11 @@
       + '<input type="file" class="video-file" accept="video/*" hidden>'
       + '<label class="f">Or paste a YouTube or Loom link <small>Better for long videos</small><input name="video_url" type="url" placeholder="https://youtu.be/…" inputmode="url"></label>'
       + '</div>'
-      + '<label class="f" data-f="text"><span class="tlabel">Your story (in Arabic)' + req + '</span><textarea name="text" maxlength="4000" dir="rtl" placeholder="' + esc(STORY_HINT) + '"></textarea><p class="ferr"></p></label>'
-      + '<fieldset class="rate"><legend>Your rating</legend><div class="stars">'
+      + '<label class="f" data-f="text"><span class="tlabel">Your story (in Arabic)' + req + '</span><textarea name="text" maxlength="4000" dir="rtl" placeholder="' + esc(STORY_HINT) + '"></textarea>'
+      + '<span class="wc" aria-live="polite"><span class="wcbar"><i></i></span><span class="wclbl"></span></span><p class="ferr"></p></label>'
+      + '<fieldset class="rate" data-f="rating"><legend>Your rating' + req + '</legend><div class="stars">'
       + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-n="' + n + '" aria-label="' + n + ' out of 5" aria-pressed="false">' + star + '</button>'; }).join('')
-      + '</div></fieldset>'
+      + '</div><p class="ferr"></p></fieldset>'
       + '<input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">'
       + '<div class="f" data-f="consent"><label class="chk"><input type="checkbox" name="consent"><span>' + esc(cfg.consent) + '</span></label><p class="ferr"></p></div>'
       + '<p class="err" role="alert"></p>'
@@ -154,7 +159,7 @@
 
     var $ = function (s) { return root.querySelector(s); };
     var form = $('form'), errEl = $('.err'), send = $('.send'), opened = Date.now();
-    var kind = 'text', rating = 5, photoBlob = null, audioBlob = null, audioName = '', videoFile = null;
+    var kind = 'text', rating = 0, photoBlob = null, audioBlob = null, audioName = '', videoFile = null;
     function err(msg) { errEl.textContent = msg || ''; }
     function fieldErr(f, msg) {
       var box = $('[data-f="' + f + '"]'); if (!box) return;
@@ -170,9 +175,22 @@
       root.querySelectorAll('.kind').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.k === k)); });
       root.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.dataset.p !== k; });
       $('.tlabel').innerHTML = k === 'text' ? 'Your story (in Arabic)' + req : 'Anything to add in writing? <small>(optional)</small>';
-      fieldErr('text', ''); err('');
+      fieldErr('text', ''); err(''); count();
     }
     $('.kinds').addEventListener('click', function (e) { var b = e.target.closest('.kind'); if (b) setKind(b.dataset.k); });
+
+    // Live word counter for written reviews: "12 / 40 words · 28 more to go", green once it's enough.
+    var MIN_WORDS = +cfg.minWords || 40;
+    function words(t) { return t.trim().split(/\s+/).filter(Boolean).length; }
+    function count() {
+      var wc = $('.wc'), n = words($('[name=text]').value);
+      wc.hidden = kind !== 'text';
+      wc.classList.toggle('ok', n >= MIN_WORDS);
+      wc.querySelector('i').style.width = Math.min(100, Math.round(n / MIN_WORDS * 100)) + '%';
+      $('.wclbl').textContent = n >= MIN_WORDS ? n + ' words · great' : n + ' / ' + MIN_WORDS + ' words · ' + (MIN_WORDS - n) + ' more to go';
+    }
+    $('[name=text]').addEventListener('input', count);
+    count();
 
     function paint() { root.querySelectorAll('.stars button').forEach(function (b) { var n = +b.dataset.n; b.classList.toggle('on', n <= rating); b.setAttribute('aria-pressed', String(n === rating)); }); }
     paint();
@@ -184,7 +202,7 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(fits);
       b.addEventListener('click', function () { var o = c.classList.toggle('open'); b.textContent = o ? 'Show less' : 'Read all'; });
     });
-    $('.stars').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { rating = +b.dataset.n; paint(); } });
+    $('.stars').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { rating = +b.dataset.n; paint(); fieldErr('rating', ''); } });
 
     var rec = null, chunks = [], stream = null, tick = null, started = 0, LIMIT = 180;
     var recBtn = $('.recbtn'), timer = $('.timer'), playback = $('.playback');
@@ -265,8 +283,9 @@
       if (!role) bad.push(['role', 'Write your job or what you study.']);
       if (!skool) bad.push(['skool', 'Write your name on Skool.']);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) bad.push(['email', 'Write a correct email.']);
-      if (kind === 'text' && text.length < 10) bad.push(['text', 'Write a few words about your story.']);
+      if (kind === 'text' && words(text) < MIN_WORDS) bad.push(['text', 'Write at least ' + MIN_WORDS + ' words. You have ' + words(text) + '.']);
       else if (kind === 'text' && !mostlyArabic(text)) bad.push(['text', 'Write your review in Arabic.']);
+      if (!rating) bad.push(['rating', 'Choose your rating (1 to 5 stars).']);
       if (!form.querySelector('[name=consent]').checked) bad.push(['consent', 'Tick the box so we can use your review.']);
       bad.forEach(function (b) { fieldErr(b[0], b[1]); });
       if (kind === 'audio' && !audioBlob) return err('Record your voice message first.');
