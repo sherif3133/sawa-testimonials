@@ -64,6 +64,20 @@ final class Sawa_Testimonials_Queue {
 			exit;
 		}
 
+		if ( 'transcribe' === $do ) {
+			$status = Sawa_Testimonials_Transcript::run( $id );
+			wp_safe_redirect( self::url( array( 'done' => 'done' === $status ? 'transcribed' : 'transcript_failed' ) ) . '#review-' . $id );
+			exit;
+		}
+
+		if ( 'save_transcript' === $do ) {
+			$text = isset( $_POST['transcript'] ) ? sanitize_textarea_field( wp_unslash( $_POST['transcript'] ) ) : '';
+			update_post_meta( $id, '_sawa_transcript', $text );
+			update_post_meta( $id, '_sawa_transcript_status', '' === trim( $text ) ? '' : 'done' );
+			wp_safe_redirect( self::url( array( 'done' => 'transcript_saved' ) ) . '#review-' . $id );
+			exit;
+		}
+
 		if ( 'reject' === $do ) {
 			$sent = false;
 			if ( is_email( $email ) ) {
@@ -101,6 +115,9 @@ final class Sawa_Testimonials_Queue {
 			'approved'        => array( 'success', 'Approved. The review is on the wall. It had no email, so no Sawa App access was sent.' ),
 			'rejected_mail'   => array( 'warning', 'Rejected. The review is in the trash and the student got your email.' ),
 			'rejected'        => array( 'warning', 'Rejected. The review is in the trash. It had no email, so no email was sent.' ),
+			'transcribed'       => array( 'success', 'Transcript updated.' ),
+			'transcript_failed' => array( 'error', 'The transcript didn\'t work. The reason is under the review.' ),
+			'transcript_saved'  => array( 'success', 'Transcript saved.' ),
 		);
 		?>
 		<div class="wrap">
@@ -132,6 +149,10 @@ final class Sawa_Testimonials_Queue {
 				.sawa-q-mail{display:grid;gap:8px;margin-top:10px;padding:12px;border:1px solid #dcdcde;border-radius:6px;background:#fcfcfc}
 				.sawa-q-mail textarea{width:100%;min-height:240px}
 				.sawa-q-warn{background:#fcf9e8;border-left:4px solid #dba617;padding:8px 10px;margin:0}
+				.sawa-q-tr{border:1px solid #dcdcde;border-radius:6px;padding:10px 12px;display:grid;gap:8px}
+				.sawa-q-trh{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:#50575e}.sawa-q-trh form{margin:0}
+				.sawa-q-tag{font-size:11px;padding:1px 8px;border-radius:999px;background:#e5f0fa;color:#135e96;margin-left:4px}
+				.sawa-q-tr details{flex:none;min-width:0}
 			</style>
 			<?php if ( ! $q->posts ) : ?>
 				<p><b>No reviews are waiting.</b> New ones show up here, and you get an email for each one.</p>
@@ -146,7 +167,9 @@ final class Sawa_Testimonials_Queue {
 				$media  = $m( 'media' );
 				$email  = $m( 'email' );
 				$rating = (int) $m( 'rating' );
-				$words  = count( preg_split( '/\s+/u', trim( wp_strip_all_tags( $p->post_content ) ), -1, PREG_SPLIT_NO_EMPTY ) );
+				$spoken = in_array( $kind, array( 'audio', 'video' ), true );
+				$trans  = $spoken ? Sawa_Testimonials_Transcript::text( $p->ID ) : '';
+				$words  = count( preg_split( '/\s+/u', trim( wp_strip_all_tags( $spoken ? $trans : $p->post_content ) ), -1, PREG_SPLIT_NO_EMPTY ) );
 				$nonce  = wp_nonce_field( 'sawa_t_queue_' . $p->ID, '_wpnonce', true, false );
 				$hidden = '<input type="hidden" name="action" value="sawa_t_queue"><input type="hidden" name="id" value="' . (int) $p->ID . '">' . $nonce;
 				?>
@@ -187,6 +210,32 @@ final class Sawa_Testimonials_Queue {
 						<?php else : ?>
 							<video controls preload="metadata" style="max-width:100%;max-height:360px" src="<?php echo esc_url( $media ); ?>"></video>
 						<?php endif; ?>
+					<?php endif; ?>
+					<?php if ( $spoken ) : ?>
+						<div class="sawa-q-tr">
+							<div class="sawa-q-trh">
+								<span>What they said<?php echo 'done' === Sawa_Testimonials_Transcript::status( $p->ID ) && '' !== $trans ? ' <span class="sawa-q-tag">automatic</span>' : ''; ?></span>
+								<?php if ( Sawa_Testimonials_Transcript::available() && ! in_array( Sawa_Testimonials_Transcript::status( $p->ID ), array( 'link', 'type', 'big' ), true ) ) : ?>
+									<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+										<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts. ?>
+										<button class="button button-small" name="do" value="transcribe"><?php echo '' === $trans ? 'Transcribe now' : 'Transcribe again'; ?></button>
+									</form>
+								<?php endif; ?>
+							</div>
+							<?php if ( '' !== $trans ) : ?>
+								<p class="sawa-q-text" dir="auto"><?php echo esc_html( $trans ); ?></p>
+							<?php else : ?>
+								<p class="sawa-q-warn"><?php echo esc_html( Sawa_Testimonials_Transcript::note( $p->ID ) ); ?></p>
+							<?php endif; ?>
+							<details>
+								<summary class="button button-small">Edit transcript</summary>
+								<form class="sawa-q-mail" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts. ?>
+									<textarea name="transcript" dir="auto" style="min-height:160px"><?php echo esc_textarea( $trans ); ?></textarea>
+									<div><button class="button button-primary" name="do" value="save_transcript">Save transcript</button></div>
+								</form>
+							</details>
+						</div>
 					<?php endif; ?>
 					<?php if ( '' !== trim( $p->post_content ) ) : ?>
 						<p class="sawa-q-text" dir="auto"><?php echo esc_html( $p->post_content ); ?></p>

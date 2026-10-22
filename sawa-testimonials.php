@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.7.1
+ * Version:           1.8.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.7.1' );
+define( 'SAWA_T_VER', '1.8.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -39,6 +39,8 @@ final class Sawa_Testimonials {
 		add_shortcode( 'sawa_review_form', array( __CLASS__, 'shortcode_form' ) );
 		require_once SAWA_T_DIR . 'includes/gift.php';
 		Sawa_Testimonials_Gift::init();
+		require_once SAWA_T_DIR . 'includes/transcript.php';
+		Sawa_Testimonials_Transcript::init();
 		if ( is_admin() ) {
 			require_once SAWA_T_DIR . 'includes/admin.php';
 			Sawa_Testimonials_Admin::init();
@@ -176,6 +178,7 @@ final class Sawa_Testimonials {
 			'media'    => self::meta( $p->ID, 'media' ),
 			'avatar'   => self::meta( $p->ID, 'avatar' ),
 			'featured' => (bool) self::meta( $p->ID, 'featured', 0 ),
+			'transcript' => 'done' === self::meta( $p->ID, 'transcript_status' ) ? self::meta( $p->ID, 'transcript' ) : '',
 		);
 	}
 
@@ -439,6 +442,7 @@ final class Sawa_Testimonials {
 		}
 
 		set_transient( $rl_key, $count + 1, HOUR_IN_SECONDS );
+		Sawa_Testimonials_Transcript::schedule( $id );
 
 		if ( self::settings()['notify'] ) {
 			$type_label = strtolower( self::TYPES[ $kind ] );

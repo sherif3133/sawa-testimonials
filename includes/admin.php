@@ -158,6 +158,10 @@ final class Sawa_Testimonials_Admin {
 				</div>
 			</div>
 			<p>
+				<label for="sawa-transcript"><strong>What they said (transcript)</strong> <span class="description">for voice and video reviews; shown on the wall under “اقرا الكلام مكتوب”</span></label><br>
+				<textarea id="sawa-transcript" name="sawa[transcript]" rows="5" class="widefat" dir="auto"><?php echo esc_textarea( (string) get_post_meta( $post->ID, '_sawa_transcript', true ) ); ?></textarea>
+			</p>
+			<p>
 				<label for="sawa-link"><strong>Link to the original post</strong> <span class="description">optional; the source icon links here</span></label><br>
 				<input type="url" id="sawa-link" name="sawa[link]" value="<?php echo esc_attr( $m( 'link' ) ); ?>" class="widefat" placeholder="https://www.skool.com/…">
 			</p>
@@ -226,6 +230,13 @@ final class Sawa_Testimonials_Admin {
 		update_post_meta( $post_id, '_sawa_media', esc_url_raw( $in['media'] ?? '' ) );
 		update_post_meta( $post_id, '_sawa_link', esc_url_raw( $in['link'] ?? '' ) );
 		update_post_meta( $post_id, '_sawa_avatar', esc_url_raw( $in['avatar'] ?? '' ) );
+		if ( isset( $in['transcript'] ) ) {
+			$tr = sanitize_textarea_field( $in['transcript'] );
+			if ( $tr !== (string) get_post_meta( $post_id, '_sawa_transcript', true ) ) {
+				update_post_meta( $post_id, '_sawa_transcript', $tr );
+				update_post_meta( $post_id, '_sawa_transcript_status', '' === trim( $tr ) ? '' : 'done' );
+			}
+		}
 		foreach ( array( 'featured', 'noname', 'nodate' ) as $flag ) {
 			update_post_meta( $post_id, '_sawa_' . $flag, empty( $in[ $flag ] ) ? 0 : 1 );
 		}

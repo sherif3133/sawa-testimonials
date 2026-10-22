@@ -33,6 +33,7 @@
     var radius = Math.max(0, Math.min(40, s.radius == null ? 14 : +s.radius));
     var star = '<svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M10 1.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.6 7.7l5.8-.8z"/></svg>';
     var playSvg = '<span><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg></span>';
+    var trIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM9 12h7M9 16h7M9 8h3"/></svg>';
 
     var css = ':host{display:block;direction:rtl;--card:' + C.card + ';--ink:' + C.ink + ';--head:' + C.head + ';--muted:' + C.muted + ';--line:' + C.line + ';--chip:' + C.chip + ';--fill:' + C.fill + ';--fill-ink:' + C.fillInk + ';--soft:' + C.soft + ';--r:' + radius + 'px;font-family:' + font + ';line-height:1.7;text-align:right;font-size:16px}'
       + '*{box-sizing:border-box}[hidden]{display:none!important}'
@@ -73,6 +74,8 @@
       + '.voice{margin-top:14px;display:flex;align-items:center;gap:10px;background:var(--soft);border-radius:999px;padding:6px 8px 6px 12px}'
       + '.voice .mic{width:30px;height:30px;border-radius:50%;background:var(--fill);display:grid;place-items:center;flex:none}.voice .mic svg{width:15px;height:15px;fill:var(--fill-ink)}'
       + '.voice audio{flex:1;min-width:0;height:36px}'
+      + '.tr{margin-top:10px}.trbtn{display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:2px 0;color:var(--head);font:600 14px/1.4 inherit;font-family:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}'
+      + '.trbtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.trt{margin-top:8px}'
       + '.shot{margin-top:14px;display:block;width:100%;border:1px solid var(--line);border-radius:max(0px,calc(var(--r) - 6px));cursor:zoom-in;padding:0;background:none;overflow:hidden}'
       + '.shot:first-child{margin-top:0}.shot img{display:block;width:100%;height:auto;max-height:420px;object-fit:cover;object-position:top}'
       + '.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--muted);flex-wrap:wrap}'
@@ -129,6 +132,9 @@
       }
       if (s.showRatings !== false && +t.rating > 0) h += stars(+t.rating);
       if (t.type === 'audio') h += voice(t);
+      if (t.transcript && (t.type === 'audio' || t.type === 'video')) {
+        h += '<div class="tr"><button class="trbtn" data-tr aria-expanded="false">' + trIcon + '<span>اقرا الكلام مكتوب</span></button><p class="text trt" dir="auto" hidden>' + esc(t.transcript) + '</p></div>';
+      }
       if (t.text) {
         var txt = String(t.text), plain = txt.replace(/\*\*/g, ''), LIM = 280;
         if (plain.length > LIM + 60) {
@@ -186,6 +192,10 @@
         var p = el.parentNode, open = el.getAttribute('aria-expanded') === 'true';
         p.children[0].hidden = !open; p.children[1].hidden = open;
         el.setAttribute('aria-expanded', String(!open)); el.textContent = open ? 'اقرا أكتر' : 'اقفل';
+      } else if (el.hasAttribute('data-tr')) {
+        var tro = el.getAttribute('aria-expanded') === 'true';
+        el.nextElementSibling.hidden = tro;
+        el.setAttribute('aria-expanded', String(!tro)); el.lastChild.textContent = tro ? 'اقرا الكلام مكتوب' : 'اخفي الكلام';
       } else if (el.dataset.zoom) {
         var lb = document.createElement('div'); lb.className = 'lb'; lb.setAttribute('role', 'dialog'); lb.setAttribute('aria-label', 'صورة');
         lb.innerHTML = '<img alt="صورة تقييم">'; lb.firstChild.src = el.dataset.zoom;
