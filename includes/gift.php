@@ -104,6 +104,16 @@ final class Sawa_Testimonials_Gift {
 				wp_lostpassword_url( home_url( '/app/' ) )
 			);
 		}
+		// While the app is still closed (Settings → Language Lens), the student is told they're on the list.
+		$open = ! class_exists( 'Sawa_Lens_App' ) || ! method_exists( 'Sawa_Lens_App', 'is_open' ) || Sawa_Lens_App::is_open();
+		if ( ! $open ) {
+			wp_mail(
+				$user->user_email,
+				"You're on the list for the Sawa App",
+				sprintf( "Hi %s,\n\nThank you for your review! It is now on our website.\n\nYou're on the list for the Sawa App. Please wait for Sherif to publish the app. Your account is ready, so you can make your password now:\n\n%s\n\nSherif, Sawa English", $first, $new_account && ! is_wp_error( $key ) ? network_site_url( 'wp-login.php?action=rp&key=' . $key . '&login=' . rawurlencode( $user->user_login ), 'login' ) : wp_lostpassword_url( home_url( '/app/' ) ) )
+			);
+			return;
+		}
 		wp_mail(
 			$user->user_email,
 			'Your gift is ready: the Sawa App',
