@@ -495,7 +495,7 @@ final class Sawa_Testimonials_Admin {
 		$d   = Sawa_Testimonials::defaults();
 		$in  = is_array( $in ) ? $in : array();
 		$out = array();
-		foreach ( array( 'title', 'subtitle', 'moreLabel', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'rejectSubject', 'rejectAiSubject', 'famewallWall' ) as $k ) {
+		foreach ( array( 'title', 'subtitle', 'moreLabel', 'titleEn', 'subtitleEn', 'moreLabelEn', 'formTitle', 'formConsent', 'formButton', 'formThanks', 'formExamples', 'rejectSubject', 'rejectAiSubject', 'famewallWall' ) as $k ) {
 			$out[ $k ] = isset( $in[ $k ] ) ? sanitize_text_field( $in[ $k ] ) : $d[ $k ];
 		}
 		$out['formIntro']    = isset( $in['formIntro'] ) ? sanitize_textarea_field( $in['formIntro'] ) : $d['formIntro'];
@@ -589,8 +589,11 @@ final class Sawa_Testimonials_Admin {
 				<?php settings_fields( 'sawa_t' ); ?>
 				<h2>Wall</h2>
 				<table class="form-table" role="presentation">
-					<tr><th scope="row"><label for="s-title">Title</label></th><td><input id="s-title" class="regular-text" name="<?php echo $f( 'title' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['title'] ); ?>"></td></tr>
-					<tr><th scope="row"><label for="s-sub">Subtitle</label></th><td><input id="s-sub" class="regular-text" name="<?php echo $f( 'subtitle' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['subtitle'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="s-title">Title (Arabic)</label></th><td><input id="s-title" class="regular-text" name="<?php echo $f( 'title' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['title'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="s-title-en">Title (English)</label></th><td><input id="s-title-en" class="regular-text" name="<?php echo $f( 'titleEn' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['titleEn'] ); ?>"><p class="description">The site opens in English; students who switch to العربية see the Arabic title and subtitle.</p></td></tr>
+					<tr><th scope="row"><label for="s-sub-en">Subtitle (English)</label></th><td><input id="s-sub-en" class="regular-text" name="<?php echo $f( 'subtitleEn' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['subtitleEn'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="s-more-en">Show more button (English)</label></th><td><input id="s-more-en" class="regular-text" name="<?php echo $f( 'moreLabelEn' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['moreLabelEn'] ); ?>"></td></tr>
+					<tr><th scope="row"><label for="s-sub">Subtitle (Arabic)</label></th><td><input id="s-sub" class="regular-text" name="<?php echo $f( 'subtitle' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['subtitle'] ); ?>"></td></tr>
 					<tr><th scope="row"><label for="s-accent">Accent color</label></th><td><input id="s-accent" type="color" name="<?php echo $f( 'accent' ); // phpcs:ignore ?>" value="<?php echo esc_attr( $s['accent'] ); ?>"></td></tr>
 					<tr><th scope="row"><label for="s-theme">Cards</label></th><td><?php echo self::select( $opt . '[theme]', array( 'dark' => 'Dark cards', 'light' => 'Light cards' ), $s['theme'], 'id="s-theme"' ); // phpcs:ignore ?></td></tr>
 					<tr><th scope="row"><label for="s-font">Font</label></th><td><?php echo self::select( $opt . '[font]', $fonts, $s['font'], 'id="s-font"' ); // phpcs:ignore ?></td></tr>

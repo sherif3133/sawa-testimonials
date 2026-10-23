@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.9.2
+ * Version:           1.10.0
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,9 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.9.2' );
+define( 'SAWA_T_VER', '1.10.0' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
+
+require_once SAWA_T_DIR . 'includes/class-lang.php'; // English by default, Arabic on request (same file in every Sawa plugin)
 
 final class Sawa_Testimonials {
 
@@ -60,6 +62,9 @@ final class Sawa_Testimonials {
 			'maxColumns'    => 3,
 			'initialCount'  => 12,
 			'moreLabel'     => 'اعرض تقييمات أكتر',
+			'titleEn'       => 'Still not sure?',
+			'subtitleEn'    => 'Hear it from the students themselves.',
+			'moreLabelEn'   => 'Show more reviews',
 			'showSummary'   => 1,
 			'showFilters'   => 1,
 			'showRatings'   => 1,
@@ -117,7 +122,7 @@ final class Sawa_Testimonials {
 
 	public static function wall_settings() {
 		$s    = self::settings();
-		$keys = array( 'title', 'subtitle', 'accent', 'theme', 'font', 'radius', 'maxColumns', 'initialCount', 'moreLabel', 'showSummary', 'showFilters', 'showRatings', 'showSources', 'showDates' );
+		$keys = array( 'title', 'subtitle', 'titleEn', 'subtitleEn', 'moreLabelEn', 'accent', 'theme', 'font', 'radius', 'maxColumns', 'initialCount', 'moreLabel', 'showSummary', 'showFilters', 'showRatings', 'showSources', 'showDates' );
 		$out  = array();
 		foreach ( $keys as $k ) {
 			$out[ $k ] = $s[ $k ];
@@ -249,6 +254,14 @@ final class Sawa_Testimonials {
 			'consent'   => $s['formConsent'],
 			'button'    => $s['formButton'],
 			'thanks'    => $s['formThanks'],
+			// The form opens in English; students who picked العربية see these (the English ones are in Settings).
+			'ar'        => array(
+				'title'   => 'سوا انجليش ساعدك إزاي في الانجليزي؟',
+				'intro'   => 'احكيلنا عن قبل وبعد. قصتك ممكن تساعد حد لسه بيبدأ.',
+				'consent' => 'معنديش مانع إن تقييمي يتستخدم في التسويق.',
+				'button'  => 'ابعت تقييمي',
+				'thanks'  => 'شكرًا! تقييمك اتبعت.',
+			),
 			'preview'   => $preview,
 			'examples'  => self::form_examples( $s['formExamples'] ),
 			'minWords'  => (int) $s['minWords'],

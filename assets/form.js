@@ -1,5 +1,7 @@
-/* Sawa Testimonials: the student review form (written, voice message or video). Simple English, Sawa visual identity. */
+/* Sawa Testimonials: the student review form (written, voice message or video). Simple English by default, Arabic (RTL)
+   when the student picked العربية (Sawa_Lang: window.SawaLang / <html lang>). Sawa visual identity. */
 (function () {
+  function isAr() { return (window.SawaLang ? window.SawaLang.get() : document.documentElement.lang) === 'ar'; }
   if (!document.getElementById('sawa-form-fonts')) {
     var lf = document.createElement('link');
     lf.id = 'sawa-form-fonts'; lf.rel = 'stylesheet';
@@ -8,6 +10,7 @@
   }
 
   var QUESTIONS = ['How did you find the community?', 'How did it help your English?', 'What problems did you have before, and how do you deal with them now?', 'What new things did you learn?'];
+  var QUESTIONS_AR = ['عرفت الكوميونيتي ازاي؟', 'ازاي ساعدك في الانجليزي؟', 'كانت ايه المشاكل اللي بتواجهك قبل كده ودلوقتي بتتعامل معاها ازاي؟', 'اتعلمت ايه جديد؟'];
   var STORY_HINT = 'عرفت الكوميونيتي ازاي؟\n'
     + 'ازاي ساعدك في الانجليزي؟\n'
     + 'كانت ايه المشاكل اللي بتواجهك قبل كده ودلوقتي بتتعامل معاها ازاي؟\n'
@@ -21,6 +24,9 @@
 
   function renderReviewForm(host, cfg) {
     var root = host.shadowRoot || host.attachShadow({ mode: 'open' });
+    var AR = isAr(), ar = cfg.ar || {};
+    function T(en, a) { return AR ? a : en; }
+    if (AR) cfg = Object.assign({}, cfg, { title: ar.title || cfg.title, intro: ar.intro || cfg.intro, consent: ar.consent || cfg.consent, button: ar.button || cfg.button, thanks: ar.thanks || cfg.thanks });
     function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
     var dark = cfg.theme === 'dark';
     var maxBytes = +cfg.maxUpload || 8 * 1048576, maxMB = Math.max(1, Math.floor(maxBytes / 1048576));
@@ -43,7 +49,7 @@
     function marks(t) { return esc(t).replace(/==([\s\S]+?)==/g, '<mark>$1</mark>').replace(/\*\*([\s\S]+?)\*\*/g, '<mark>$1</mark>'); }
     var req = '<span class="req" aria-hidden="true">*</span>';
 
-    var css = ':host{display:block;direction:ltr;--fill:' + C.fill + ';font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:' + C.ink + ';line-height:1.6;font-size:16px;text-align:left}'
+    var css = ':host{display:block;direction:' + (AR ? 'rtl' : 'ltr') + ';--fill:' + C.fill + ';font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;color:' + C.ink + ';line-height:1.6;font-size:16px;text-align:start}'
       + '*{box-sizing:border-box}[hidden]{display:none!important}'
       + '.box{max-width:680px;margin:0 auto;background:' + C.card + ';border:1px solid ' + C.line + ';border-radius:' + r + 'px;padding:clamp(22px,4vw,40px);display:grid;gap:20px}'
       + 'h2{margin:0;font-family:"Changa","IBM Plex Sans",sans-serif;font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.2;color:' + C.head + ';text-wrap:balance}'
@@ -51,7 +57,7 @@
       + '.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}'
       + '.f{display:grid;gap:7px;font-weight:600;font-size:15px;color:' + C.head + ';align-content:start}'
       + '.f small,.hint{font-weight:400;color:' + C.muted + ';font-size:13.5px}'
-      + '.req{color:#E3262B;margin-left:3px}'
+      + '.req{color:#E3262B;margin-inline-start:3px}'
       + 'input,textarea{font:inherit;font-weight:400;color:' + C.ink + ';background:' + C.field + ';border:1px solid ' + C.line + ';border-radius:' + rf + 'px;padding:12px 14px;width:100%}'
       + 'textarea{min-height:200px;resize:vertical;line-height:1.7;font-family:"IBM Plex Sans Arabic","IBM Plex Sans",sans-serif;unicode-bidi:plaintext}'
       + 'input::placeholder,textarea::placeholder{color:' + C.muted + ';opacity:1}'
@@ -93,11 +99,11 @@
       + '.send:hover{opacity:.9}.send:disabled{opacity:.6;cursor:default}'
       + '.gift{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:' + rf + 'px;background:' + (dark ? '#123A22' : '#E7F5EC') + ';color:' + (dark ? '#A8E6BF' : '#1D6B3A') + ';font-size:15.5px}'
       + '.gift svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.gift b{font-weight:600}'
-      + '.next{margin:0;padding-left:22px;display:grid;gap:6px;text-align:left;max-width:460px}.next b{color:' + C.head + '}'
+      + '.next{margin:0;padding-inline-start:22px;display:grid;gap:6px;text-align:start;max-width:460px}.next b{color:' + C.head + '}'
       + '.done{text-align:center;justify-items:center}.tick{width:64px;height:64px;border-radius:50%;background:' + C.fill + ';color:' + C.fillInk + ';display:grid;place-items:center;font-size:30px}'
       + '.note{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:' + rf + 'px;background:' + (dark ? '#3A1213' : '#FDECEC') + ';color:' + (dark ? '#FFB3B3' : '#B3171C') + ';font-size:15.5px}'
       + '.note svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.note b{font-weight:600}'
-      + '.qs{margin:0;padding-left:22px;display:grid;gap:2px}'
+      + '.qs{margin:0;padding-inline-start:22px;display:grid;gap:2px}'
       + '.exs{display:grid;gap:10px}'
       + '.ex{border:1px solid ' + C.line + ';border-radius:' + rf + 'px;padding:14px 16px;display:grid;gap:10px}'
       + '.exhd{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:' + C.head + '}'
@@ -113,41 +119,41 @@
     root.innerHTML = '<style>' + css + '</style>'
       + '<form class="box" novalidate>'
       + '<h2>' + esc(cfg.title) + '</h2>' + (cfg.intro ? '<p class="intro">' + esc(cfg.intro) + '</p>' : '')
-      + '<div class="gift">' + ic.gift + '<div><b>Your gift: free access to the Sawa App.</b> Send a good review and you get it when Sherif approves your review.</div></div>'
-      + '<div class="note">' + ic.lang + '<div><b>Write your review in Arabic.</b> Most of our students read Arabic, so your story helps them more in Arabic. Voice messages and videos should be in Arabic too.'
-        + '<p style="margin:8px 0 0"><b>Write it yourself, in your own words.</b> Do not use AI (like ChatGPT) to write your review. Reviews written with AI will be rejected.</p></div></div>'
-      + '<div class="f"><span>A good review answers these questions:</span><ol class="qs">' + QUESTIONS.map(function (q) { return '<li style="font-weight:400">' + esc(q) + '</li>'; }).join('') + '</ol></div>'
-      + (examples.length ? '<div class="f"><span>Need ideas? Read what other students wrote:</span><div class="exs">' + examples.map(function (x) {
+      + '<div class="gift">' + ic.gift + '<div>' + T('<b>Your gift: free access to the Sawa App.</b> Send a good review and you get it when Sherif approves your review.', '<b>هديتك: دخول ببلاش لتطبيق سوا.</b> ابعت تقييم كويس وهتاخدها لما شريف يوافق على تقييمك.') + '</div></div>'
+      + '<div class="note">' + ic.lang + '<div>' + T('<b>Write your review in Arabic.</b> Most of our students read Arabic, so your story helps them more in Arabic. Voice messages and videos should be in Arabic too.', '<b>اكتب تقييمك بالعربي.</b> معظم طلبتنا بيقروا عربي، فقصتك هتفيدهم أكتر بالعربي. الفويس نوت والفيديوهات كمان يكونوا بالعربي.')
+        + '<p style="margin:8px 0 0">' + T('<b>Write it yourself, in your own words.</b> Do not use AI (like ChatGPT) to write your review. Reviews written with AI will be rejected.', '<b>اكتبه بنفسك، بكلامك إنت.</b> متستخدمش الذكاء الاصطناعي (زي ChatGPT) عشان تكتب تقييمك. التقييمات المكتوبة بالذكاء الاصطناعي هتترفض.') + '</p></div></div>'
+      + '<div class="f"><span>' + T('A good review answers these questions:', 'التقييم الكويس بيجاوب على الأسئلة دي:') + '</span><ol class="qs">' + (AR ? QUESTIONS_AR : QUESTIONS).map(function (q) { return '<li style="font-weight:400">' + esc(q) + '</li>'; }).join('') + '</ol></div>'
+      + (examples.length ? '<div class="f"><span>' + T('Need ideas? Read what other students wrote:', 'محتاج أفكار؟ اقرا اللي طلبة تانيين كتبوه:') + '</span><div class="exs">' + examples.map(function (x) {
         return '<div class="ex"><div class="exhd">' + (x.avatar ? '<img class="exav" src="' + esc(x.avatar) + '" alt="" loading="lazy">' : '') + esc(x.name) + '</div>'
-          + '<p class="extx" dir="rtl">' + marks(x.text) + '</p><button type="button" class="exmore">Read all</button></div>';
+          + '<p class="extx" dir="rtl">' + marks(x.text) + '</p><button type="button" class="exmore">' + T('Read all', 'اقرا كله') + '</button></div>';
       }).join('') + '</div></div>' : '')
       + '<div class="photo" data-f="photo"><span class="av" aria-hidden="true">' + ic.user + '</span>'
-      + '<div class="f"><span>Your photo' + req + '</span><button type="button" class="btn2 pick-photo">' + ic.camera + '<span>Add your photo</span></button><p class="ferr"></p></div>'
+      + '<div class="f"><span>' + T('Your photo', 'صورتك') + req + '</span><button type="button" class="btn2 pick-photo">' + ic.camera + '<span>' + T('Add your photo', 'ضيف صورتك') + '</span></button><p class="ferr"></p></div>'
       + '<input type="file" class="photo-file" accept="image/*" hidden></div>'
-      + '<div class="row2"><label class="f" data-f="name"><span>Your full name' + req + '</span><input name="name" maxlength="80" autocomplete="name" placeholder="Mona Ahmed Hassan" required><p class="ferr"></p></label>'
-      + '<label class="f" data-f="role"><span>Your job or studies' + req + '</span><input name="role" maxlength="120" placeholder="Nurse · or · Engineering student" required><p class="ferr"></p></label>'
-      + '<label class="f" data-f="skool"><span>Your name on Skool' + req + '</span><input name="skool" maxlength="80" placeholder="Mona Ahmed" required><small>The name people see on your Skool profile.</small><p class="ferr"></p></label>'
-      + '<label class="f" data-f="email"><span>Your email' + req + '</span><input name="email" type="email" maxlength="120" autocomplete="email" inputmode="email" placeholder="mona@gmail.com" required><small>We send your app login here.</small><p class="ferr"></p></label></div>'
-      + '<div class="f"><span>How do you want to share?</span><div class="kinds" role="group" aria-label="How do you want to share?">'
-      + '<button type="button" class="kind" data-k="text" aria-pressed="true">' + ic.text + 'Write</button>'
-      + '<button type="button" class="kind" data-k="audio" aria-pressed="false">' + ic.audio + 'Voice message</button>'
-      + '<button type="button" class="kind" data-k="video" aria-pressed="false">' + ic.video + 'Video</button></div></div>'
+      + '<div class="row2"><label class="f" data-f="name"><span>' + T('Your full name', 'اسمك بالكامل') + req + '</span><input name="name" maxlength="80" autocomplete="name" placeholder="Mona Ahmed Hassan" required><p class="ferr"></p></label>'
+      + '<label class="f" data-f="role"><span>' + T('Your job or studies', 'شغلك أو دراستك') + req + '</span><input name="role" maxlength="120" placeholder="' + T('Nurse · or · Engineering student', 'ممرضة · أو · طالب هندسة') + '" required><p class="ferr"></p></label>'
+      + '<label class="f" data-f="skool"><span>' + T('Your name on Skool', 'اسمك على Skool') + req + '</span><input name="skool" maxlength="80" placeholder="Mona Ahmed" required><small>' + T('The name people see on your Skool profile.', 'الاسم اللي الناس بتشوفه على بروفايلك في Skool.') + '</small><p class="ferr"></p></label>'
+      + '<label class="f" data-f="email"><span>' + T('Your email', 'إيميلك') + req + '</span><input name="email" type="email" maxlength="120" autocomplete="email" inputmode="email" placeholder="mona@gmail.com" required><small>' + T('We send your app login here.', 'هنبعتلك هنا بيانات دخول التطبيق.') + '</small><p class="ferr"></p></label></div>'
+      + '<div class="f"><span>' + T('How do you want to share?', 'عايز تشارك إزاي؟') + '</span><div class="kinds" role="group" aria-label="' + T('How do you want to share?', 'عايز تشارك إزاي؟') + '">'
+      + '<button type="button" class="kind" data-k="text" aria-pressed="true">' + ic.text + T('Write', 'كتابة') + '</button>'
+      + '<button type="button" class="kind" data-k="audio" aria-pressed="false">' + ic.audio + T('Voice message', 'فويس نوت') + '</button>'
+      + '<button type="button" class="kind" data-k="video" aria-pressed="false">' + ic.video + T('Video', 'فيديو') + '</button></div></div>'
       + '<div class="panel" data-p="audio" hidden>'
-      + '<div class="rec"><button type="button" class="recbtn"><span class="dot"></span><span class="rl">Start recording</span></button><span class="timer">0:00</span><span class="hint">Up to 3 minutes</span></div>'
+      + '<div class="rec"><button type="button" class="recbtn"><span class="dot"></span><span class="rl">' + T('Start recording', 'ابدأ التسجيل') + '</span></button><span class="timer">0:00</span><span class="hint">' + T('Up to 3 minutes', 'لحد ٣ دقايق') + '</span></div>'
       + '<audio class="playback" controls hidden></audio>'
-      + '<span class="hint">Can\'t record here? <button type="button" class="link pick-audio">Upload a sound file</button></span>'
+      + '<span class="hint">' + T('Can\'t record here?', 'مش عارف تسجّل هنا؟') + ' <button type="button" class="link pick-audio">' + T('Upload a sound file', 'ارفع ملف صوت') + '</button></span>'
       + '<input type="file" class="audio-file" accept="audio/*" hidden>'
       + '</div>'
       + '<div class="panel" data-p="video" hidden>'
-      + '<div class="photo"><button type="button" class="btn2 pick-video">' + ic.video + '<span>Choose or record a video</span></button><span class="hint vname">Up to ' + maxMB + ' MB</span></div>'
+      + '<div class="photo"><button type="button" class="btn2 pick-video">' + ic.video + '<span>' + T('Choose or record a video', 'اختار أو صوّر فيديو') + '</span></button><span class="hint vname">' + T('Up to ', 'لحد ') + maxMB + ' MB</span></div>'
       + '<video class="vprev" controls playsinline hidden></video>'
       + '<input type="file" class="video-file" accept="video/*" hidden>'
-      + '<label class="f">Or paste a YouTube or Loom link <small>Better for long videos</small><input name="video_url" type="url" placeholder="https://youtu.be/…" inputmode="url"></label>'
+      + '<label class="f">' + T('Or paste a YouTube or Loom link', 'أو الصق لينك YouTube أو Loom') + ' <small>' + T('Better for long videos', 'أحسن للفيديوهات الطويلة') + '</small><input name="video_url" type="url" placeholder="https://youtu.be/…" inputmode="url"></label>'
       + '</div>'
-      + '<label class="f" data-f="text"><span class="tlabel">Your story (in Arabic)' + req + '</span><textarea name="text" maxlength="4000" dir="rtl" placeholder="' + esc(STORY_HINT) + '"></textarea>'
+      + '<label class="f" data-f="text"><span class="tlabel">' + T('Your story (in Arabic)', 'قصتك (بالعربي)') + req + '</span><textarea name="text" maxlength="4000" dir="rtl" placeholder="' + esc(STORY_HINT) + '"></textarea>'
       + '<span class="wc" aria-live="polite"><span class="wcbar"><i></i></span><span class="wclbl"></span></span><p class="ferr"></p></label>'
-      + '<fieldset class="rate" data-f="rating"><legend>Your rating' + req + '</legend><div class="stars">'
-      + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-n="' + n + '" aria-label="' + n + ' out of 5" aria-pressed="false">' + star + '</button>'; }).join('')
+      + '<fieldset class="rate" data-f="rating"><legend>' + T('Your rating', 'تقييمك') + req + '</legend><div class="stars">'
+      + [1, 2, 3, 4, 5].map(function (n) { return '<button type="button" data-n="' + n + '" aria-label="' + n + T(' out of 5', ' من ٥') + '" aria-pressed="false">' + star + '</button>'; }).join('')
       + '</div><p class="ferr"></p></fieldset>'
       + '<input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">'
       + '<div class="f" data-f="consent"><label class="chk"><input type="checkbox" name="consent"><span>' + esc(cfg.consent) + '</span></label><p class="ferr"></p></div>'
@@ -156,7 +162,7 @@
       + '<button class="send" type="submit">' + esc(cfg.button || 'Send') + '</button>'
       + '</form>'
       + '<div class="box done" hidden><div class="tick" aria-hidden="true">✓</div><h2>' + esc(cfg.thanks) + '</h2>'
-      + '<ol class="next"><li>Sherif reads your review (usually within a day).</li><li>If it\'s approved, you get an email at <b class="mail"></b> to open the Sawa App.</li><li>If it\'s too short, you get an email asking you to write a bit more.</li></ol></div>';
+      + '<ol class="next">' + T('<li>Sherif reads your review (usually within a day).</li><li>If it\'s approved, you get an email at <b class="mail"></b> to open the Sawa App.</li><li>If it\'s too short, you get an email asking you to write a bit more.</li>', '<li>شريف هيقرا تقييمك (غالبًا خلال يوم).</li><li>لو اتوافق عليه، هيوصلك إيميل على <b class="mail"></b> عشان تفتح تطبيق سوا.</li><li>لو قصير أوي، هيوصلك إيميل يطلب منك تكتب أكتر شوية.</li>') + '</ol></div>';
 
     var $ = function (s) { return root.querySelector(s); };
     var form = $('form'), errEl = $('.err'), send = $('.send'), opened = Date.now();
@@ -175,7 +181,7 @@
       kind = k;
       root.querySelectorAll('.kind').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.k === k)); });
       root.querySelectorAll('.panel').forEach(function (p) { p.hidden = p.dataset.p !== k; });
-      $('.tlabel').innerHTML = k === 'text' ? 'Your story (in Arabic)' + req : 'Anything to add in writing? <small>(optional)</small>';
+      $('.tlabel').innerHTML = k === 'text' ? T('Your story (in Arabic)', 'قصتك (بالعربي)') + req : T('Anything to add in writing? <small>(optional)</small>', 'عايز تضيف حاجة مكتوبة؟ <small>(اختياري)</small>');
       fieldErr('text', ''); err(''); count();
     }
     $('.kinds').addEventListener('click', function (e) { var b = e.target.closest('.kind'); if (b) setKind(b.dataset.k); });
@@ -188,7 +194,7 @@
       wc.hidden = kind !== 'text';
       wc.classList.toggle('ok', n >= MIN_WORDS);
       wc.querySelector('i').style.width = Math.min(100, Math.round(n / MIN_WORDS * 100)) + '%';
-      $('.wclbl').textContent = n >= MIN_WORDS ? n + ' words · great' : n + ' / ' + MIN_WORDS + ' words · ' + (MIN_WORDS - n) + ' more to go';
+      $('.wclbl').textContent = n >= MIN_WORDS ? n + T(' words · great', ' كلمة · جامد') : n + ' / ' + MIN_WORDS + T(' words · ', ' كلمة · ') + (MIN_WORDS - n) + T(' more to go', ' كمان وتخلص');
     }
     $('[name=text]').addEventListener('input', count);
     count();
@@ -201,7 +207,7 @@
       function fits() { if (!c.classList.contains('open')) b.hidden = t.scrollHeight <= t.clientHeight + 2; }
       requestAnimationFrame(fits);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(fits);
-      b.addEventListener('click', function () { var o = c.classList.toggle('open'); b.textContent = o ? 'Show less' : 'Read all'; });
+      b.addEventListener('click', function () { var o = c.classList.toggle('open'); b.textContent = o ? T('Show less', 'اقفل') : T('Read all', 'اقرا كله'); });
     });
     $('.stars').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { rating = +b.dataset.n; paint(); fieldErr('rating', ''); } });
 
@@ -212,7 +218,7 @@
     recBtn.addEventListener('click', function () {
       if (rec && rec.state === 'recording') return stopRec();
       err('');
-      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) return err('This browser can\'t record. Upload a sound file instead.');
+      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) return err(T('This browser can\'t record. Upload a sound file instead.', 'المتصفح ده مش بيسجّل. ارفع ملف صوت بدل كده.'));
       navigator.mediaDevices.getUserMedia({ audio: true }).then(function (s) {
         stream = s; chunks = [];
         var types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
@@ -223,21 +229,21 @@
           var t = (rec.mimeType || type || 'audio/webm').split(';')[0];
           showAudio(new Blob(chunks, { type: t }), 'voice-message.' + (/mp4/.test(t) ? 'm4a' : /ogg/.test(t) ? 'ogg' : 'webm'));
           stream.getTracks().forEach(function (tr) { tr.stop(); });
-          clearInterval(tick); recBtn.classList.remove('on'); $('.rl').textContent = 'Record again';
+          clearInterval(tick); recBtn.classList.remove('on'); $('.rl').textContent = T('Record again', 'سجّل تاني');
         };
         rec.start(); started = Date.now(); audioBlob = null; playback.hidden = true;
-        recBtn.classList.add('on'); $('.rl').textContent = 'Stop recording';
+        recBtn.classList.add('on'); $('.rl').textContent = T('Stop recording', 'وقّف التسجيل');
         tick = setInterval(function () {
           var sec = Math.floor((Date.now() - started) / 1000);
           timer.textContent = Math.floor(sec / 60) + ':' + ('0' + (sec % 60)).slice(-2);
           if (sec >= LIMIT) stopRec();
         }, 250);
-      }).catch(function () { err('We can\'t use your microphone. Allow the microphone in your browser, or upload a sound file.'); });
+      }).catch(function () { err(T('We can\'t use your microphone. Allow the microphone in your browser, or upload a sound file.', 'مش قادرين نستخدم المايك. اسمح للمايك في المتصفح، أو ارفع ملف صوت.')); });
     });
     $('.pick-audio').addEventListener('click', function () { $('.audio-file').click(); });
     $('.audio-file').addEventListener('change', function () {
       var f = this.files[0]; if (!f) return;
-      if (f.size > maxBytes) return err('This file is ' + Math.ceil(f.size / 1048576) + ' MB. The limit is ' + maxMB + ' MB.');
+      if (f.size > maxBytes) return err(T('This file is ', 'الملف ده ') + Math.ceil(f.size / 1048576) + T(' MB. The limit is ', ' MB. الحد الأقصى ') + maxMB + ' MB.');
       err(''); showAudio(f, f.name);
     });
 
@@ -246,12 +252,12 @@
       var f = this.files[0]; if (!f) return;
       if (f.size > maxBytes) {
         videoFile = null; $('.vprev').hidden = true;
-        return err('This video is ' + Math.ceil(f.size / 1048576) + ' MB. The limit is ' + maxMB + ' MB. Put it on YouTube (unlisted is fine) or Loom and paste the link below.');
+        return err(T('This video is ', 'الفيديو ده ') + Math.ceil(f.size / 1048576) + T(' MB. The limit is ', ' MB. الحد الأقصى ') + maxMB + T(' MB. Put it on YouTube (unlisted is fine) or Loom and paste the link below.', ' MB. ارفعه على YouTube (unlisted تمام) أو Loom والصق اللينك تحت.'));
       }
       err(''); videoFile = f;
       $('.vname').textContent = f.name + ' · ' + (f.size / 1048576).toFixed(1) + ' MB';
       $('.vprev').src = URL.createObjectURL(f); $('.vprev').hidden = false;
-      $('.pick-video span').textContent = 'Choose another video';
+      $('.pick-video span').textContent = T('Choose another video', 'اختار فيديو تاني');
     });
 
     $('.pick-photo').addEventListener('click', function () { $('.photo-file').click(); });
@@ -266,10 +272,10 @@
           photoBlob = b; fieldErr('photo', '');
           $('.av').classList.add('has');
           $('.av').innerHTML = '<img alt="">'; $('.av img').src = URL.createObjectURL(b);
-          $('.pick-photo span').textContent = 'Change photo';
+          $('.pick-photo span').textContent = T('Change photo', 'غيّر الصورة');
         }, 'image/jpeg', 0.85);
       };
-      img.onerror = function () { fieldErr('photo', 'This photo won\'t open. Try a JPG or PNG.'); };
+      img.onerror = function () { fieldErr('photo', T('This photo won\'t open. Try a JPG or PNG.', 'الصورة دي مش بتفتح. جرّب JPG أو PNG.')); };
       img.src = url;
     });
 
@@ -279,19 +285,19 @@
       e.preventDefault(); clearErrs();
       stopRec();
       var name = val('name'), role = val('role'), skool = val('skool'), email = val('email'), text = val('text'), vurl = val('video_url'), bad = [];
-      if (!photoBlob) bad.push(['photo', 'Add a photo of yourself.']);
-      if (!name) bad.push(['name', 'Write your name.']);
-      if (!role) bad.push(['role', 'Write your job or what you study.']);
-      if (!skool) bad.push(['skool', 'Write your name on Skool.']);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) bad.push(['email', 'Write a correct email.']);
-      if (kind === 'text' && words(text) < MIN_WORDS) bad.push(['text', 'Write at least ' + MIN_WORDS + ' words. You have ' + words(text) + '.']);
-      else if (kind === 'text' && !mostlyArabic(text)) bad.push(['text', 'Write your review in Arabic.']);
-      if (!rating) bad.push(['rating', 'Choose your rating (1 to 5 stars).']);
-      if (!form.querySelector('[name=consent]').checked) bad.push(['consent', 'Tick the box so we can use your review.']);
+      if (!photoBlob) bad.push(['photo', T('Add a photo of yourself.', 'ضيف صورة ليك.')]);
+      if (!name) bad.push(['name', T('Write your name.', 'اكتب اسمك.')]);
+      if (!role) bad.push(['role', T('Write your job or what you study.', 'اكتب شغلك أو بتدرس إيه.')]);
+      if (!skool) bad.push(['skool', T('Write your name on Skool.', 'اكتب اسمك على Skool.')]);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) bad.push(['email', T('Write a correct email.', 'اكتب إيميل صح.')]);
+      if (kind === 'text' && words(text) < MIN_WORDS) bad.push(['text', T('Write at least ' + MIN_WORDS + ' words. You have ' + words(text) + '.', 'اكتب ' + MIN_WORDS + ' كلمة على الأقل. إنت كاتب ' + words(text) + '.')]);
+      else if (kind === 'text' && !mostlyArabic(text)) bad.push(['text', T('Write your review in Arabic.', 'اكتب تقييمك بالعربي.')]);
+      if (!rating) bad.push(['rating', T('Choose your rating (1 to 5 stars).', 'اختار تقييمك (من ١ لـ ٥ نجوم).')]);
+      if (!form.querySelector('[name=consent]').checked) bad.push(['consent', T('Tick the box so we can use your review.', 'علّم على المربع عشان نقدر نستخدم تقييمك.')]);
       bad.forEach(function (b) { fieldErr(b[0], b[1]); });
-      if (kind === 'audio' && !audioBlob) return err('Record your voice message first.');
-      if (kind === 'video' && !videoFile && !vurl) return err('Choose a video, or paste a YouTube or Loom link.');
-      if (kind === 'video' && !videoFile && !/^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtu\.be|loom\.com)\//i.test(vurl)) return err('The link must be from YouTube or Loom.');
+      if (kind === 'audio' && !audioBlob) return err(T('Record your voice message first.', 'سجّل الفويس نوت الأول.'));
+      if (kind === 'video' && !videoFile && !vurl) return err(T('Choose a video, or paste a YouTube or Loom link.', 'اختار فيديو، أو الصق لينك YouTube أو Loom.'));
+      if (kind === 'video' && !videoFile && !/^https?:\/\/([a-z0-9-]+\.)*(youtube\.com|youtu\.be|loom\.com)\//i.test(vurl)) return err(T('The link must be from YouTube or Loom.', 'اللينك لازم يكون من YouTube أو Loom.'));
       if (bad.length) { $('[data-f="' + bad[0][0] + '"]').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
       if (cfg.preview) return done();
 
@@ -304,7 +310,7 @@
       if (kind === 'video' && videoFile) fd.append('video', videoFile, videoFile.name);
       fd.append('photo', photoBlob, 'photo.jpg');
 
-      send.disabled = true; send.textContent = 'Sending…';
+      send.disabled = true; send.textContent = T('Sending…', 'بنبعت…');
       var bar = $('.bar'), fill = bar.firstChild;
       var xhr = new XMLHttpRequest();
       xhr.open('POST', cfg.endpoint);
@@ -315,10 +321,10 @@
         if (xhr.status >= 200 && xhr.status < 300 && res && res.ok) {
           return done();
         }
-        if (xhr.status === 413) return reset('This file is too big for the website. Put the video on YouTube or Loom and paste the link.');
-        reset((res && res.message) || 'Your review was not sent. Try again.');
+        if (xhr.status === 413) return reset(T('This file is too big for the website. Put the video on YouTube or Loom and paste the link.', 'الملف ده كبير على الموقع. ارفع الفيديو على YouTube أو Loom والصق اللينك.'));
+        reset((res && res.message) || T('Your review was not sent. Try again.', 'تقييمك مااتبعتش. جرّب تاني.'));
       };
-      xhr.onerror = function () { reset('Your review was not sent. Check your internet and try again.'); };
+      xhr.onerror = function () { reset(T('Your review was not sent. Check your internet and try again.', 'تقييمك مااتبعتش. اتأكد من النت وجرّب تاني.')); };
       xhr.send(fd);
     });
   }
@@ -328,11 +334,18 @@
       if (el.dataset.ready) return;
       var data = el.nextElementSibling;
       if (!data || !data.classList.contains('sawa-form-data')) return;
-      try { el.dataset.ready = '1'; renderReviewForm(el, JSON.parse(data.textContent)); }
+      try { el.dataset.ready = '1'; el._sawaCfg = JSON.parse(data.textContent); renderReviewForm(el, el._sawaCfg); }
       catch (e) { if (window.console) console.error('Sawa review form:', e); }
     });
   }
   window.SawaReviewForm = { render: renderReviewForm, boot: boot };
+  // English | العربية switch: redraw the form in the other language, unless the student already started typing.
+  document.addEventListener('sawa-lang', function () {
+    document.querySelectorAll('.sawa-review-form').forEach(function (el) {
+      var r = el.shadowRoot, typed = r && Array.prototype.some.call(r.querySelectorAll('input:not([type=checkbox]):not(.hp), textarea'), function (i) { return i.value; });
+      if (el._sawaCfg && !typed) renderReviewForm(el, el._sawaCfg);
+    });
+  });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   if (window.jQuery) window.jQuery(window).on('elementor/frontend/init', function () { setTimeout(boot, 300); });
 })();
