@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Sawa Testimonials
  * Description:       A wall of student testimonials plus a review form where students send written, voice or video reviews. Shortcodes: [sawa_testimonials] and [sawa_review_form].
- * Version:           1.9.1
+ * Version:           1.9.2
  * Author:            Sawa English
  * Requires at least: 6.0
  * Requires PHP:      7.4
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'SAWA_T_VER', '1.9.1' );
+define( 'SAWA_T_VER', '1.9.2' );
 define( 'SAWA_T_URL', plugin_dir_url( __FILE__ ) );
 define( 'SAWA_T_DIR', plugin_dir_path( __FILE__ ) );
 
@@ -323,13 +323,35 @@ final class Sawa_Testimonials {
 		);
 	}
 
+	/** Cloudflare's edge addresses (cloudflare.com/ips). Only a request from one of these may name the visitor's IP in CF-Connecting-IP. */
+	const CLOUDFLARE = array( '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22', '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32' );
+
+	private static function in_range( $ip, $cidr ) {
+		list( $net, $bits ) = explode( '/', $cidr );
+		$a = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		$b = @inet_pton( $net ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		if ( false === $a || false === $b || strlen( $a ) !== strlen( $b ) ) {
+			return false;
+		}
+		$bytes = intdiv( (int) $bits, 8 );
+		$rest  = (int) $bits % 8;
+		if ( substr( $a, 0, $bytes ) !== substr( $b, 0, $bytes ) ) {
+			return false;
+		}
+		return ! $rest || 0 === ( ( ord( $a[ $bytes ] ) ^ ord( $b[ $bytes ] ) ) & ( 0xFF << ( 8 - $rest ) ) & 0xFF );
+	}
+
+	/** The visitor's address. CF-Connecting-IP is trusted only when the request really came through Cloudflare (anyone can send that header). */
 	private static function client_ip() {
-		foreach ( array( 'HTTP_CF_CONNECTING_IP', 'REMOTE_ADDR' ) as $k ) {
-			if ( ! empty( $_SERVER[ $k ] ) ) {
-				return sanitize_text_field( wp_unslash( $_SERVER[ $k ] ) );
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		if ( ! empty( $_SERVER['HTTP_CF_CONNECTING_IP'] ) ) {
+			foreach ( self::CLOUDFLARE as $cidr ) {
+				if ( self::in_range( $ip, $cidr ) ) {
+					return sanitize_text_field( wp_unslash( $_SERVER['HTTP_CF_CONNECTING_IP'] ) );
+				}
 			}
 		}
-		return '';
+		return $ip;
 	}
 
 	public static function submit( WP_REST_Request $r ) {
@@ -352,6 +374,11 @@ final class Sawa_Testimonials {
 		$count  = (int) get_transient( $rl_key );
 		if ( $count >= 6 ) {
 			return $fail( 'You sent a few reviews already. Try again in one hour.', 429 );
+		}
+		// Whole site: at most 30 reviews an hour (each voice/video review costs a paid transcript).
+		$all_key = 'sawa_t_rl_all_' . gmdate( 'YmdH' );
+		if ( (int) get_transient( $all_key ) >= 30 ) {
+			return $fail( 'Many reviews arrived in the last hour. Try again a bit later.', 429 );
 		}
 
 		$name   = sanitize_text_field( mb_substr( (string) $r->get_param( 'name' ), 0, 80 ) );
@@ -444,6 +471,7 @@ final class Sawa_Testimonials {
 		}
 
 		set_transient( $rl_key, $count + 1, HOUR_IN_SECONDS );
+		set_transient( $all_key, (int) get_transient( $all_key ) + 1, HOUR_IN_SECONDS );
 		Sawa_Testimonials_Transcript::schedule( $id );
 
 		if ( self::settings()['notify'] ) {
@@ -484,6 +512,14 @@ final class Sawa_Testimonials {
 		}
 		if ( ! $ok ) {
 			return new WP_Error( 'type', 'This type of file is not allowed here.' );
+		}
+		// The browser's file type can be faked: the photo must really be a picture, and every file has a size cap.
+		$max = array( 'photo' => 10, 'audio' => 30, 'video' => 300 );
+		if ( (int) $f['size'] > ( $max[ $field ] ?? 10 ) * MB_IN_BYTES ) {
+			return new WP_Error( 'size', 'photo' === $field ? 'This photo is too big. Choose one under 10 MB.' : 'This file is too big for the website. Put the video on YouTube or Loom and paste the link.' );
+		}
+		if ( 'photo' === $field && ! wp_getimagesize( $f['tmp_name'] ) ) {
+			return new WP_Error( 'type', 'Choose a photo (JPG or PNG).' );
 		}
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
